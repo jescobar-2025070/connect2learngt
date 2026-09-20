@@ -1,0 +1,58 @@
+<div class="confirm-wrap">
+  @if (booking(); as b) {
+    <div class="card confirm-card">
+      <span class="confirm-badge" aria-hidden="true">
+        <app-icon name="check" [size]="30" [strokeWidth]="2.6" />
+      </span>
+
+      <h1>¡Tu tutoría está reservada!</h1>
+      <p class="muted">
+        Enviamos la confirmación a tu correo y le avisamos a {{ b.tutorName }}. Recibirás un
+        recordatorio una hora antes.
+      </p>
+
+      <div class="confirm-details">
+        <div class="row">
+          <span class="muted mini">Tutor</span>
+          <span class="confirm-tutor">
+            <span class="avatar" aria-hidden="true">{{ b.tutorInitials }}</span>
+            <strong>{{ b.tutorName }}</strong>
+          </span>
+        </div>
+        <div class="row">
+          <span class="muted mini">Materia</span>
+          <strong>{{ b.subject }}</strong>
+        </div>
+        <div class="row">
+          <span class="muted mini">Fecha</span>
+          <strong>{{ b.date }}</strong>
+        </div>
+        <div class="row">
+          <span class="muted mini">Hora</span>
+          <strong>{{ b.time }}</strong>
+        </div>
+        <div class="row">
+          <span class="muted mini">Modalidad</span>
+          <strong>{{ b.modality }}</strong>
+        </div>
+        <div class="row confirm-goal">
+          <span class="muted mini">Tu objetivo</span>
+          <span>{{ b.goal }}</span>
+        </div>
+      </div>
+
+      <div class="actions confirm-actions">
+        <a class="btn" routerLink="/app/inicio">Ir a mi panel</a>
+        <button type="button" class="btn subtle" (click)="comingSoon('Añadir al calendario')">
+          <app-icon name="calendar" [size]="17" />
+          Añadir al calendario
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="empty">
+      <p><strong>Aún no tienes una reserva.</strong></p>
+      <a class="btn" routerLink="/app/tutores">Buscar un tutor</a>
+    </div>
+  }
+</div>

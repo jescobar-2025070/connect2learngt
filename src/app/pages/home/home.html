@@ -1,0 +1,157 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Hola, {{ firstName }} 👋</h1>
+    <p class="muted mt-0">¿Listo para seguir aprendiendo hoy?</p>
+  </div>
+  <div class="top-actions">
+    <button type="button" class="icon-btn" (click)="comingSoon('La búsqueda global')" aria-label="Buscar">
+      <app-icon name="search" [size]="19" />
+    </button>
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="comingSoon('El centro de notificaciones')"
+      aria-label="Notificaciones"
+    >
+      <app-icon name="bell" [size]="19" />
+    </button>
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid" aria-busy="true" aria-live="polite">
+    <span class="sr-only">Cargando tu panel…</span>
+    <div class="card c8">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+      <div class="skeleton line short"></div>
+    </div>
+    <div class="card c4">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+    </div>
+    <div class="card c8">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+    </div>
+    <div class="card c4">
+      <div class="skeleton circle"></div>
+      <div class="skeleton line" style="margin-top: 14px"></div>
+      <div class="skeleton line short"></div>
+    </div>
+  </div>
+} @else if (summary(); as s) {
+  <div class="grid">
+    <!-- Próxima sesión: resultado del camino feliz de reserva -->
+    <section class="card c8" [class.hero]="s.nextSession" aria-labelledby="next-session-title">
+      @if (s.nextSession; as booking) {
+        <p class="eyebrow">Tu próxima tutoría</p>
+        <h2 id="next-session-title">{{ booking.subject }}</h2>
+        <p class="next-tutor">
+          <span class="avatar" aria-hidden="true">{{ booking.tutorInitials }}</span>
+          <span>con {{ booking.tutorName }}</span>
+        </p>
+        <p class="next-meta">
+          <span><app-icon name="calendar" [size]="16" /> {{ booking.date }}</span>
+          <span><app-icon name="clock" [size]="16" /> {{ booking.time }}</span>
+          <span>{{ booking.modality }}</span>
+        </p>
+        <div class="actions">
+          <button type="button" class="btn" (click)="comingSoon('La sala de videollamada')">
+            Unirme a la sala
+          </button>
+          <button type="button" class="btn subtle" (click)="comingSoon('El material de la sesión')">
+            Ver materiales
+          </button>
+        </div>
+      } @else {
+        <h2 id="next-session-title">Aún no tienes tutorías agendadas</h2>
+        <p class="muted">
+          Encuentra un tutor para la materia que más te cuesta y reserva tu primera sesión en menos
+          de un minuto.
+        </p>
+        <div class="actions">
+          <a class="btn" routerLink="/app/tutores">
+            Buscar un tutor
+            <app-icon name="arrowRight" [size]="17" />
+          </a>
+        </div>
+      }
+    </section>
+
+    <section class="card c4" aria-labelledby="progress-title">
+      <h2 id="progress-title">Tu progreso</h2>
+      <p class="stat">{{ s.weeklyGoalPercent }}%</p>
+      <p class="muted mini">Meta semanal completada</p>
+      <div
+        class="bar"
+        role="progressbar"
+        [attr.aria-valuenow]="s.weeklyGoalPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-label="Meta semanal"
+      >
+        <i [style.width.%]="s.weeklyGoalPercent"></i>
+      </div>
+      <div class="mini-stats">
+        <div>
+          <strong>{{ s.studyStreak }}</strong>
+          <span class="mini muted">días de racha</span>
+        </div>
+        <div>
+          <strong>{{ s.hoursThisWeek }} h</strong>
+          <span class="mini muted">esta semana</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card c8" aria-labelledby="recommended-title">
+      <div class="section-head">
+        <h2 id="recommended-title" class="mt-0">Recomendado para ti</h2>
+        <a class="btn ghost sm" routerLink="/app/recursos">Ver todo</a>
+      </div>
+      <div class="row">
+        <div>
+          <span class="pill brand">{{ s.recommendedResource.subject }}</span>
+          <h3 class="mt-0" style="margin-top: 8px">{{ s.recommendedResource.title }}</h3>
+          <p class="muted mini mt-0">{{ s.recommendedResource.description }}</p>
+        </div>
+        <a class="btn alt" routerLink="/app/recursos">Ver material</a>
+      </div>
+
+      <div class="subject-progress">
+        <h3>Avance por materia</h3>
+        @for (sp of s.subjectProgress; track sp.subject) {
+          <div class="subject-row">
+            <span class="mini">{{ sp.subject }}</span>
+            <div
+              class="bar"
+              role="progressbar"
+              [attr.aria-valuenow]="sp.percent"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="'Avance en ' + sp.subject"
+            >
+              <i [style.width.%]="sp.percent"></i>
+            </div>
+            <strong class="mini">{{ sp.percent }}%</strong>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="card c4 center-text" aria-labelledby="featured-tutor-title">
+      <span class="avatar xl" style="margin: 0 auto" aria-hidden="true">
+        {{ s.featuredTutor.initials }}
+      </span>
+      <p class="rating" style="margin-top: 10px">★ {{ s.featuredTutor.rating }}</p>
+      <h2 id="featured-tutor-title">{{ s.featuredTutor.name }}</h2>
+      <p class="muted mini">{{ s.featuredTutor.headline }}</p>
+      <a class="btn block" [routerLink]="['/app/tutores', s.featuredTutor.id]">Agendar sesión</a>
+    </section>
+  </div>
+}

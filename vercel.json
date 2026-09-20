@@ -1,0 +1,8 @@
+{
+  "buildCommand": "ng build",
+  "outputDirectory": "dist/connect2learn/browser",
+  "framework": "angular",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

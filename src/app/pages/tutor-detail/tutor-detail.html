@@ -1,0 +1,166 @@
+<div class="topbar">
+  <a class="btn ghost sm" routerLink="/app/tutores">
+    <app-icon name="arrowLeft" [size]="17" />
+    Volver a tutores
+  </a>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid" aria-busy="true">
+    <span class="sr-only">Cargando el perfil del tutor…</span>
+    <div class="card c8">
+      <div class="skeleton circle"></div>
+      <div class="skeleton title" style="margin-top: 16px"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+    </div>
+    <div class="card c4">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+    </div>
+  </div>
+} @else if (tutor(); as t) {
+  <div class="grid">
+    <section class="card c8" aria-labelledby="tutor-name">
+      <div class="tutor-profile-head">
+        <span class="avatar xl" aria-hidden="true">{{ t.initials }}</span>
+        <div>
+          <div class="tutor-head">
+            <h1 id="tutor-name" class="mt-0">{{ t.name }}</h1>
+            @if (t.verified) {
+              <span class="pill success">
+                <app-icon name="check" [size]="13" />
+                Verificado
+              </span>
+            }
+          </div>
+          <p class="muted mt-0">{{ t.headline }}</p>
+          <p class="rating mt-0">
+            ★ {{ t.rating }}
+            <span class="muted mini">({{ t.reviews }} reseñas)</span>
+          </p>
+        </div>
+      </div>
+
+      <p class="tutor-bio">{{ t.bio }}</p>
+
+      <div class="fact-grid">
+        <div>
+          <span class="mini muted">Precio</span>
+          <strong>${{ t.pricePerHour }}/hora</strong>
+        </div>
+        <div>
+          <span class="mini muted">Sesiones dadas</span>
+          <strong>{{ t.sessionsGiven }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Idiomas</span>
+          <strong>{{ t.languages.join(', ') }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Tiempo de respuesta</span>
+          <strong>{{ t.responseTime }}</strong>
+        </div>
+      </div>
+
+      <div class="chips-inline">
+        @for (s of t.subjects; track s) {
+          <span class="pill brand">{{ s }}</span>
+        }
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn subtle" (click)="comingSoon('El chat con el tutor')">
+          <app-icon name="messages" [size]="17" />
+          Enviar mensaje
+        </button>
+        <button type="button" class="btn subtle" (click)="comingSoon('Las reseñas completas')">
+          Ver reseñas
+        </button>
+      </div>
+    </section>
+
+    <!-- Paso clave del camino feliz: elegir horario y confirmar -->
+    <section class="card c4 booking-panel" aria-labelledby="booking-title">
+      <h2 id="booking-title">Reserva tu sesión</h2>
+      <p class="muted mini">Elige un horario disponible esta semana.</p>
+
+      <div class="slot-days" role="group" aria-label="Horarios disponibles">
+        @for (day of slotsByDay(); track day.date) {
+          <div class="slot-day">
+            <p class="slot-day-head">
+              <strong>{{ day.label }}</strong>
+              <span class="mini muted">{{ day.number }}</span>
+            </p>
+            <div class="slot-times">
+              @for (slot of day.slots; track slot.id) {
+                <button
+                  type="button"
+                  class="slot"
+                  [disabled]="!slot.available"
+                  [attr.aria-pressed]="selectedSlotId() === slot.id"
+                  [attr.aria-label]="
+                    slot.available
+                      ? day.label + ' ' + day.number + ' a las ' + slot.time
+                      : day.label + ' ' + day.number + ' a las ' + slot.time + ' (no disponible)'
+                  "
+                  (click)="selectSlot(slot)"
+                >
+                  {{ slot.time }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="field" style="margin-top: 16px">
+        <label for="modality">Modalidad</label>
+        <select id="modality" name="modality" class="input" [(ngModel)]="modality">
+          <option>Videollamada</option>
+          <option>Presencial</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="goal">¿Qué quieres reforzar?</label>
+        <textarea
+          id="goal"
+          name="goal"
+          class="input"
+          rows="3"
+          placeholder="Ej. Derivadas y regla de la cadena para el examen del viernes"
+          [(ngModel)]="goal"
+        ></textarea>
+        <p class="hint">Opcional, pero ayuda al tutor a preparar la sesión.</p>
+      </div>
+
+      @if (selectedSlot(); as slot) {
+        <p class="notice success" role="status">
+          Seleccionaste <strong>{{ slot.dayLabel }} {{ slot.dayNumber }}</strong> a las
+          <strong>{{ slot.time }}</strong>.
+        </p>
+      } @else {
+        <p class="hint">Selecciona un horario para continuar.</p>
+      }
+
+      <button
+        type="button"
+        class="btn block"
+        [disabled]="!selectedSlot() || booking()"
+        (click)="confirm()"
+      >
+        @if (booking()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Confirmando…</span>
+        } @else {
+          <span>Confirmar reserva</span>
+        }
+      </button>
+    </section>
+  </div>
+}

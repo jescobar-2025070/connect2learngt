@@ -1,0 +1,89 @@
+<main class="auth" id="main">
+  <div class="auth-top">
+    <app-theme-toggle />
+  </div>
+
+  <div class="authbox">
+    <div class="center-text">
+      <p class="brand-mark">
+        <app-icon name="resources" [size]="18" />
+        <span>CONNECT2LEARN</span>
+      </p>
+      <h1>Bienvenido de nuevo</h1>
+      <p class="muted">Inicia sesión para continuar aprendiendo.</p>
+    </div>
+
+    <form (ngSubmit)="submit()" novalidate class="login-form">
+      <div class="field">
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          class="input"
+          autocomplete="email"
+          placeholder="tu@correo.com"
+          [(ngModel)]="email"
+          [attr.aria-invalid]="emailInvalid"
+          [attr.aria-describedby]="emailInvalid ? 'email-error' : null"
+        />
+        @if (emailInvalid) {
+          <p class="field-error" id="email-error">Escribe un correo válido, por ejemplo ana&#64;correo.com.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="input"
+          autocomplete="current-password"
+          placeholder="Mínimo 6 caracteres"
+          [(ngModel)]="password"
+          [attr.aria-invalid]="passwordInvalid"
+          [attr.aria-describedby]="passwordInvalid ? 'password-error' : null"
+        />
+        @if (passwordInvalid) {
+          <p class="field-error" id="password-error">La contraseña debe tener al menos 6 caracteres.</p>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="notice warning" role="alert">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn block" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Entrando…</span>
+        } @else {
+          <span>Acceder</span>
+        }
+      </button>
+
+      <button type="button" class="btn ghost block" (click)="demoLogin()" [disabled]="loading()">
+        Entrar con la cuenta demo
+      </button>
+
+      <button
+        type="button"
+        class="btn subtle block"
+        (click)="comingSoon('El acceso con Google')"
+        [disabled]="loading()"
+      >
+        Continuar con Google
+      </button>
+    </form>
+
+    <p class="center-text mini muted mt-0">
+      ¿No tienes cuenta? <a routerLink="/registro">Regístrate</a>
+    </p>
+    <p class="center-text mini mt-0">
+      <button type="button" class="link-btn" (click)="comingSoon('La recuperación de contraseña')">
+        ¿Olvidaste tu contraseña?
+      </button>
+    </p>
+  </div>
+</main>

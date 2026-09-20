@@ -1,0 +1,148 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Supervisión familiar</h1>
+    <p class="muted mt-0">Controla qué comparte tu cuenta con tus padres o tutores.</p>
+  </div>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid" aria-busy="true">
+    <span class="sr-only">Cargando supervisión familiar…</span>
+    <div class="card c7">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+    </div>
+    <div class="card c5">
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+    </div>
+  </div>
+} @else {
+  <div class="grid">
+    <section class="card c7" aria-labelledby="guardians-title">
+      <h2 id="guardians-title">Familiares vinculados</h2>
+      <p class="muted mini">
+        Las personas vinculadas pueden ver la información que actives en "Qué compartimos", a la
+        derecha.
+      </p>
+
+      @if (guardians().length === 0) {
+        <div class="empty" style="margin-top: 12px">
+          Aún no tienes familiares vinculados. Invita a tu padre, madre o tutor abajo.
+        </div>
+      } @else {
+        @for (g of guardians(); track g.id) {
+          <div class="row guardian-row">
+            <span style="display: flex; align-items: center; gap: 12px">
+              <span class="avatar" aria-hidden="true">{{ g.initials }}</span>
+              <span>
+                <strong>{{ g.name }}</strong>
+                <span class="mini muted guardian-email">{{ g.email }}</span>
+                <span class="mini muted guardian-since">
+                  {{ g.relationship }} · {{ g.linkedSince }}
+                </span>
+              </span>
+            </span>
+
+            <span class="guardian-actions">
+              @if (g.status === 'pending') {
+                <span class="pill warning">Invitación pendiente</span>
+              } @else {
+                <span class="pill success">Activo</span>
+              }
+
+              @if (confirmingRevokeId() === g.id) {
+                <span class="inline-confirm">
+                  <span class="mini">¿Revocar?</span>
+                  <button
+                    type="button"
+                    class="btn sm"
+                    [disabled]="revokingId() === g.id"
+                    (click)="confirmRevoke(g)"
+                  >
+                    @if (revokingId() === g.id) {
+                      <span class="spinner sm on-brand" aria-hidden="true"></span>
+                    } @else {
+                      <span>Sí, revocar</span>
+                    }
+                  </button>
+                  <button type="button" class="btn ghost sm" (click)="cancelRevoke()">Cancelar</button>
+                </span>
+              } @else {
+                <button type="button" class="btn ghost sm" (click)="askRevoke(g.id)">
+                  Revocar acceso
+                </button>
+              }
+            </span>
+          </div>
+        }
+      }
+
+      <div class="invite-box">
+        <label for="inviteEmail">Invitar a un familiar por correo</label>
+        <form class="invite-form" (ngSubmit)="invite()">
+          <input
+            id="inviteEmail"
+            name="inviteEmail"
+            type="email"
+            class="input"
+            placeholder="familiar@correo.com"
+            [(ngModel)]="inviteEmail"
+            [attr.aria-invalid]="!!inviteError()"
+            [attr.aria-describedby]="inviteError() ? 'invite-error' : null"
+          />
+          <button type="submit" class="btn" [disabled]="!inviteEmail.trim() || inviting()">
+            @if (inviting()) {
+              <span class="spinner sm on-brand" aria-hidden="true"></span>
+              <span>Enviando…</span>
+            } @else {
+              <span>Invitar</span>
+            }
+          </button>
+        </form>
+        @if (inviteError()) {
+          <p class="field-error" id="invite-error">{{ inviteError() }}</p>
+        }
+      </div>
+    </section>
+
+    <section class="card c5" aria-labelledby="sharing-title">
+      <h2 id="sharing-title">Qué compartimos</h2>
+      <p class="muted mini">Decides exactamente qué puede ver cada familiar vinculado.</p>
+
+      @for (p of preferences(); track p.id) {
+        <div class="pref-row">
+          <div class="pref-text">
+            <strong>{{ p.label }}</strong>
+            <p class="mini muted mt-0">{{ p.description }}</p>
+          </div>
+          <button
+            type="button"
+            class="switch"
+            role="switch"
+            [attr.aria-checked]="p.enabled"
+            [attr.aria-label]="p.label"
+            [class.on]="p.enabled"
+            [disabled]="savingPrefId() === p.id"
+            (click)="togglePreference(p)"
+          >
+            <span class="switch-thumb"></span>
+          </button>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="btn ghost block"
+        style="margin-top: 16px"
+        (click)="comingSoon('El historial de accesos')"
+      >
+        Ver historial de accesos
+      </button>
+    </section>
+  </div>
+}

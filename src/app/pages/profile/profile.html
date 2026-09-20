@@ -1,0 +1,88 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Mi perfil</h1>
+    <p class="muted mt-0">Tu información como estudiante.</p>
+  </div>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (student(); as s) {
+  <div class="grid">
+    <section class="card c8" aria-labelledby="profile-name">
+      <div class="tutor-profile-head">
+        <span class="avatar xl" aria-hidden="true">{{ s.initials }}</span>
+        <div>
+          <h2 id="profile-name" class="mt-0">{{ s.name }}</h2>
+          <p class="muted mt-0">{{ s.email }}</p>
+          <span class="pill brand">Estudiante</span>
+        </div>
+      </div>
+
+      <div class="fact-grid" style="margin-top: 20px">
+        <div>
+          <span class="mini muted">Edad</span>
+          <strong>{{ s.age }} años</strong>
+        </div>
+        <div>
+          <span class="mini muted">Institución</span>
+          <strong>{{ s.institution }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Grado / curso</span>
+          <strong>{{ s.grade }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Miembro desde</span>
+          <strong>Octubre 2025</strong>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top: 20px">
+        <h3 class="mt-0">Tus intereses</h3>
+        <a class="btn ghost sm" routerLink="/intereses">Editar</a>
+      </div>
+      <div class="chips-inline">
+        @if (s.interests.length) {
+          @for (i of s.interests; track i) {
+            <span class="pill">{{ i }}</span>
+          }
+        } @else {
+          <p class="muted mini">Aún no configuraste tus intereses.</p>
+        }
+      </div>
+
+      <div class="actions" style="margin-top: 22px">
+        <button type="button" class="btn subtle" (click)="comingSoon('Editar información personal')">
+          Editar información
+        </button>
+        <button type="button" class="btn subtle" (click)="comingSoon('Cambiar la contraseña')">
+          Cambiar contraseña
+        </button>
+        <button type="button" class="btn subtle" (click)="comingSoon('La configuración de privacidad')">
+          Privacidad
+        </button>
+      </div>
+    </section>
+
+    <section class="card c4 center-text" aria-labelledby="profile-progress-title">
+      <h2 id="profile-progress-title">Tu progreso</h2>
+      <p class="progresscircle">75%</p>
+      <p class="muted mini">Meta semanal</p>
+      <div
+        class="bar"
+        role="progressbar"
+        aria-valuenow="75"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-label="Progreso semanal"
+      >
+        <i style="width: 75%"></i>
+      </div>
+      <a class="btn block" style="margin-top: 18px" routerLink="/app/reputacion">
+        Ver reputación y logros
+      </a>
+    </section>
+  </div>
+}

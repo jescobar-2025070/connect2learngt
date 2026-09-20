@@ -1,0 +1,137 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Learning Hub</h1>
+    <p class="muted mt-0">Comparte preguntas, ideas y recursos con otros estudiantes.</p>
+  </div>
+  <div class="top-actions">
+    <a class="btn ghost" routerLink="/app/grupos">
+      <app-icon name="users" [size]="17" />
+      Ver grupos de estudio
+    </a>
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="grid">
+  <section class="c8">
+    <div class="card composer">
+      <label for="postText">¿Qué estás aprendiendo hoy?</label>
+      <textarea
+        id="postText"
+        name="postText"
+        class="input"
+        rows="3"
+        placeholder="Escribe una pregunta, consejo o publicación…"
+        [(ngModel)]="draft"
+      ></textarea>
+      <div class="actions">
+        <select class="input" style="max-width: 200px" name="topic" [(ngModel)]="topic">
+          @for (t of topics; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+        <button type="button" class="btn" [disabled]="!draft.trim() || posting()" (click)="publish()">
+          @if (posting()) {
+            <span class="spinner sm on-brand" aria-hidden="true"></span>
+            <span>Publicando…</span>
+          } @else {
+            <span>Publicar</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <div class="actions" style="margin: 16px 0">
+      <button
+        type="button"
+        class="btn"
+        [class.alt]="filter() === 'recent'"
+        [class.ghost]="filter() !== 'recent'"
+        (click)="setFilter('recent')"
+      >
+        Recientes
+      </button>
+      <button
+        type="button"
+        class="btn ghost"
+        [class.alt]="filter() === 'mine'"
+        (click)="setFilter('mine')"
+      >
+        Mis publicaciones
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando publicaciones…</span>
+        @for (i of [1, 2, 3]; track i) {
+          <div class="card post-card">
+            <div class="post-head">
+              <div class="skeleton circle" style="width:42px;height:42px"></div>
+              <div style="flex: 1">
+                <div class="skeleton line short"></div>
+              </div>
+            </div>
+            <div class="skeleton line medium" style="margin-top: 10px"></div>
+            <div class="skeleton line"></div>
+          </div>
+        }
+      </div>
+    } @else if (posts().length === 0) {
+      <div class="empty">Aún no hay publicaciones. ¡Sé el primero en escribir algo!</div>
+    } @else {
+      @for (post of posts(); track post.id) {
+        <article class="card post-card">
+          <div class="post-head">
+            <span class="avatar" aria-hidden="true">{{ post.initials }}</span>
+            <div class="post-meta">
+              <strong>{{ post.author }}</strong>
+              <span class="mini muted">{{ post.role }} · {{ post.timeAgo }}</span>
+            </div>
+            <span class="pill brand">{{ post.topic }}</span>
+          </div>
+          <p class="post-content">{{ post.content }}</p>
+          <div class="post-actions">
+            <button
+              type="button"
+              class="post-action"
+              [class.liked]="isLiked(post)"
+              [attr.aria-pressed]="isLiked(post)"
+              [attr.aria-label]="'Me gusta, ' + post.likes + ' reacciones'"
+              (click)="toggleLike(post)"
+            >
+              <app-icon name="heart" [size]="17" />
+              {{ post.likes }}
+            </button>
+            <button
+              type="button"
+              class="post-action"
+              (click)="comingSoon('Responder a esta publicación')"
+            >
+              <app-icon name="reply" [size]="17" />
+              {{ post.replies }} respuestas
+            </button>
+          </div>
+        </article>
+      }
+    }
+  </section>
+
+  <aside class="c4">
+    <div class="card">
+      <h2>🔥 Temas en tendencia</h2>
+      <div class="chips-inline">
+        @for (topic of trending; track topic) {
+          <span class="pill">{{ topic }}</span>
+        }
+      </div>
+    </div>
+    <div class="card" style="margin-top: 18px">
+      <h2>💡 Consejo</h2>
+      <p class="muted mini mt-0">
+        Haz preguntas claras y específicas — recibirás mejores respuestas más rápido. Respeta
+        siempre a los demás estudiantes.
+      </p>
+    </div>
+  </aside>
+</div>

@@ -1,0 +1,60 @@
+<div class="shell">
+  <div class="scrim" [class.show]="menuOpen()" (click)="closeMenu()" aria-hidden="true"></div>
+
+  <aside class="side" [class.open]="menuOpen()">
+    <a class="brand" routerLink="/app/inicio" (click)="closeMenu()">
+      <app-icon name="resources" [size]="19" />
+      <span>CONNECT2LEARN</span>
+    </a>
+    <p class="brand-sub">Ecosistema educativo</p>
+
+    <nav class="nav" aria-label="Navegación principal">
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          (click)="closeMenu()"
+        >
+          <span class="nav-ico"><app-icon [name]="item.icon" [size]="19" /></span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="side-foot">
+      @if (student(); as s) {
+        <a class="side-user" routerLink="/app/perfil" (click)="closeMenu()">
+          <span class="avatar" aria-hidden="true">{{ s.initials }}</span>
+          <span class="side-user-text">
+            <strong>{{ s.name }}</strong>
+            <span class="mini muted">{{ s.grade }}</span>
+          </span>
+        </a>
+      }
+      <button type="button" class="btn ghost block" (click)="logout()">
+        <app-icon name="logout" [size]="17" />
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <main class="content" id="main">
+    <div class="mobile-bar">
+      <button
+        type="button"
+        class="icon-btn nav-toggle"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="main-nav"
+        [attr.aria-label]="menuOpen() ? 'Cerrar menú' : 'Abrir menú'"
+      >
+        <app-icon [name]="menuOpen() ? 'close' : 'menu'" [size]="20" />
+      </button>
+      <span class="mobile-brand">CONNECT2LEARN</span>
+      <app-theme-toggle />
+    </div>
+
+    <router-outlet />
+  </main>
+</div>

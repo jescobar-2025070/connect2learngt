@@ -1,0 +1,98 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Mensajes</h1>
+    <p class="muted mt-0">Coordina con tus tutores y grupos de estudio.</p>
+  </div>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="chat-layout card">
+  <aside class="chat-list" aria-label="Conversaciones">
+    @for (c of conversations(); track c.id) {
+      <button
+        type="button"
+        class="chat-item"
+        [class.active]="activeId() === c.id"
+        (click)="selectConversation(c.id)"
+      >
+        <span class="avatar" aria-hidden="true">{{ c.initials }}</span>
+        <span class="chat-item-text">
+          <strong>{{ c.name }}</strong>
+          <span class="mini muted chat-preview">{{ c.preview }}</span>
+        </span>
+        <span class="chat-item-meta">
+          <span class="mini muted">{{ c.timeAgo }}</span>
+          @if (c.unread > 0) {
+            <span class="unread-dot" [attr.aria-label]="c.unread + ' mensajes sin leer'">
+              {{ c.unread }}
+            </span>
+          }
+        </span>
+      </button>
+    }
+  </aside>
+
+  <section class="chat-thread">
+    @if (activeConversation; as conv) {
+      <div class="chat-thread-head">
+        <span class="avatar" aria-hidden="true">{{ conv.initials }}</span>
+        <div>
+          <strong>{{ conv.name }}</strong>
+          <p class="mini muted mt-0">Conversación activa</p>
+        </div>
+        <button
+          type="button"
+          class="icon-btn"
+          style="margin-left: auto"
+          (click)="comingSoon('La videollamada')"
+          aria-label="Iniciar videollamada"
+        >
+          <app-icon name="tutors" [size]="18" />
+        </button>
+      </div>
+
+      <div class="chat-messages" aria-live="polite" [attr.aria-busy]="loading()">
+        @if (loading()) {
+          <span class="sr-only">Cargando mensajes…</span>
+          <div class="skeleton line medium" style="max-width: 220px"></div>
+          <div class="skeleton line" style="max-width: 160px; margin-left: auto"></div>
+        } @else {
+          @for (m of messages(); track m.id) {
+            <div class="bubble-row" [class.me]="m.mine">
+              @if (!m.mine) {
+                <span class="avatar sm" aria-hidden="true">{{ m.authorInitials }}</span>
+              }
+              <div class="bubble" [class.me]="m.mine">
+                @if (!m.mine && isGroupThread) {
+                  <span class="bubble-author">{{ m.author }}</span>
+                }
+                <span>{{ m.text }}</span>
+                <span class="bubble-time">{{ m.time }}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <form class="chat-compose" (ngSubmit)="send()">
+        <label class="sr-only" for="messageInput">Escribe un mensaje</label>
+        <input
+          id="messageInput"
+          name="messageInput"
+          class="input"
+          placeholder="Escribe un mensaje…"
+          [(ngModel)]="draft"
+        />
+        <button type="submit" class="btn" [disabled]="!draft.trim() || sending()" aria-label="Enviar mensaje">
+          @if (sending()) {
+            <span class="spinner sm on-brand" aria-hidden="true"></span>
+          } @else {
+            <app-icon name="send" [size]="18" />
+          }
+        </button>
+      </form>
+    }
+  </section>
+</div>

@@ -1,0 +1,94 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Reputación y logros</h1>
+    <p class="muted mt-0">Sigue tu camino de aprendizaje, gana insignias y construye tu prestigio.</p>
+  </div>
+  <div class="top-actions">
+    <a class="btn" routerLink="/app/tutores">Reservar tutoría</a>
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="grid">
+  <section class="card c8 hero" aria-labelledby="rep-score-title">
+    <p class="eyebrow">Puntaje de reputación</p>
+    <p class="stat" id="rep-score-title">{{ repScore | number }}</p>
+    <h2>Nivel {{ level }}: Buscador de conocimiento</h2>
+    <p>Estás en el 15% más activo de estudiantes este mes.</p>
+    <p class="mt-0">
+      Progreso de XP <strong>{{ xp | number }} / {{ xpGoal | number }} XP</strong>
+    </p>
+    <div
+      class="bar"
+      role="progressbar"
+      [attr.aria-valuenow]="xpPercent"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-label="Progreso de experiencia"
+    >
+      <i [style.width.%]="xpPercent"></i>
+    </div>
+  </section>
+
+  <section class="card c4" aria-labelledby="rewards-title">
+    <h2 id="rewards-title">Recompensas recientes</h2>
+    @if (loading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando recompensas…</span>
+        @for (i of [1, 2, 3]; track i) {
+          <div class="row">
+            <div class="skeleton line medium"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      @for (r of rewards(); track r.id) {
+        <div class="row">
+          <span>{{ r.icon }} {{ r.label }}</span>
+          <strong class="reward-points">{{ r.points }}</strong>
+        </div>
+      }
+    }
+  </section>
+
+  <section class="card c12" aria-labelledby="badges-title">
+    <h2 id="badges-title">Insignias de logro</h2>
+    <p class="muted mini">Colecciona insignias participando en el ecosistema.</p>
+
+    @if (loading()) {
+      <div class="grid" aria-busy="true">
+        <span class="sr-only">Cargando insignias…</span>
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="card c3 badge-card">
+            <div class="skeleton circle" style="margin: 0 auto"></div>
+            <div class="skeleton line medium" style="margin: 12px auto 0"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="grid">
+        @for (a of achievements(); track a.id) {
+          <div class="card c3 badge-card" [class.locked]="!a.unlocked">
+            <span class="badge-icon" aria-hidden="true">{{ a.icon }}</span>
+            <h3>
+              {{ a.title }}
+              @if (!a.unlocked) {
+                <app-icon name="shield" [size]="14" />
+              }
+            </h3>
+            <p class="muted mini mt-0">{{ a.description }}</p>
+            @if (!a.unlocked) {
+              <button
+                type="button"
+                class="btn ghost sm block"
+                (click)="comingSoon('El seguimiento de este logro')"
+              >
+                Ver cómo desbloquear
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>

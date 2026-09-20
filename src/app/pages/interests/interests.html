@@ -1,0 +1,58 @@
+<main class="auth" id="main">
+  <div class="auth-top">
+    <app-theme-toggle />
+  </div>
+
+  <div class="onboarding">
+    <div class="center-text">
+      <p class="step-label">Paso 2 de 2</p>
+      <h1>¿Qué te interesa aprender?</h1>
+      <p class="muted">
+        Elige al menos {{ minInterests }} temas. Con esto personalizamos tus recursos, tutores y
+        publicaciones recomendadas.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="chips" role="group" aria-label="Temas de interés">
+        @for (topic of topics; track topic) {
+          <button
+            type="button"
+            class="chip"
+            [attr.aria-pressed]="isSelected(topic)"
+            (click)="toggle(topic)"
+          >
+            @if (isSelected(topic)) {
+              <app-icon name="check" [size]="16" />
+            }
+            {{ topic }}
+          </button>
+        }
+      </div>
+
+      <p class="hint" aria-live="polite">
+        @if (canContinue()) {
+          Has elegido {{ selected().length }} temas. ¡Listo para continuar!
+        } @else {
+          Elige {{ remaining() }} tema(s) más para continuar.
+        }
+      </p>
+
+      <div class="actions onboarding-actions">
+        <button type="button" class="btn ghost" (click)="back()" [disabled]="saving()">
+          <app-icon name="arrowLeft" [size]="17" />
+          Atrás
+        </button>
+        <button type="button" class="btn" (click)="goNext()" [disabled]="!canContinue() || saving()">
+          @if (saving()) {
+            <span class="spinner sm on-brand" aria-hidden="true"></span>
+            <span>Guardando…</span>
+          } @else {
+            <span>Continuar</span>
+            <app-icon name="arrowRight" [size]="17" />
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</main>

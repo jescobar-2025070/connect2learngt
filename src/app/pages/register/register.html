@@ -1,0 +1,152 @@
+<main class="auth" id="main">
+  <div class="auth-top">
+    <app-theme-toggle />
+  </div>
+
+  <div class="authbox">
+    <div class="center-text">
+      <p class="brand-mark">
+        <app-icon name="resources" [size]="18" />
+        <span>CONNECT2LEARN</span>
+      </p>
+      <h1>Crea tu cuenta de estudiante</h1>
+      <p class="muted">Participa, publica y aprende con tu comunidad.</p>
+    </div>
+
+    <form (ngSubmit)="submit()" novalidate class="login-form">
+      <div class="field">
+        <label for="name">Nombre completo</label>
+        <input
+          id="name"
+          name="name"
+          class="input"
+          autocomplete="name"
+          placeholder="Ej. Ana Silva"
+          [(ngModel)]="name"
+          [attr.aria-invalid]="nameInvalid"
+          [attr.aria-describedby]="nameInvalid ? 'name-error' : null"
+        />
+        @if (nameInvalid) {
+          <p class="field-error" id="name-error">Escribe tu nombre completo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label for="reg-email">Correo electrónico</label>
+        <input
+          id="reg-email"
+          name="email"
+          type="email"
+          class="input"
+          autocomplete="email"
+          placeholder="ana@ejemplo.com"
+          [(ngModel)]="email"
+          [attr.aria-invalid]="emailInvalid"
+          [attr.aria-describedby]="emailInvalid ? 'reg-email-error' : null"
+        />
+        @if (emailInvalid) {
+          <p class="field-error" id="reg-email-error">Escribe un correo válido.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label for="reg-password">Contraseña</label>
+        <input
+          id="reg-password"
+          name="password"
+          type="password"
+          class="input"
+          autocomplete="new-password"
+          placeholder="Mínimo 6 caracteres"
+          [(ngModel)]="password"
+          [attr.aria-invalid]="passwordInvalid"
+          [attr.aria-describedby]="passwordInvalid ? 'reg-password-error' : null"
+        />
+        @if (passwordInvalid) {
+          <p class="field-error" id="reg-password-error">Usa al menos 6 caracteres.</p>
+        }
+      </div>
+
+      <div class="grid two-col">
+        <div class="field">
+          <label for="age">Edad</label>
+          <input
+            id="age"
+            name="age"
+            type="number"
+            min="15"
+            max="25"
+            class="input"
+            placeholder="17"
+            [(ngModel)]="age"
+            [attr.aria-invalid]="ageInvalid"
+            [attr.aria-describedby]="ageInvalid ? 'age-error' : null"
+          />
+          @if (ageInvalid) {
+            <p class="field-error" id="age-error">La plataforma es para estudiantes de 15 a 25 años.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="grade">Grado / curso</label>
+          <input
+            id="grade"
+            name="grade"
+            class="input"
+            placeholder="Ej. 5to Bachillerato"
+            [(ngModel)]="grade"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="institution">Institución</label>
+        <input
+          id="institution"
+          name="institution"
+          class="input"
+          placeholder="Nombre de tu colegio o universidad"
+          [(ngModel)]="institution"
+        />
+      </div>
+
+      <div class="field">
+        <div class="checkbox-row">
+          <input
+            id="terms"
+            name="terms"
+            type="checkbox"
+            [(ngModel)]="terms"
+            [attr.aria-invalid]="termsInvalid"
+            [attr.aria-describedby]="termsInvalid ? 'terms-error' : null"
+          />
+          <label for="terms">Acepto los Términos de servicio y la Política de privacidad.</label>
+        </div>
+        @if (termsInvalid) {
+          <p class="field-error" id="terms-error">Debes aceptar los términos para continuar.</p>
+        }
+      </div>
+
+      <button type="submit" class="btn block" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Creando cuenta…</span>
+        } @else {
+          <span>Crear cuenta</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="btn subtle block"
+        (click)="comingSoon('El registro con Google')"
+        [disabled]="loading()"
+      >
+        Registrarse con Google
+      </button>
+    </form>
+
+    <p class="center-text mini muted mt-0">
+      ¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a>
+    </p>
+  </div>
+</main>

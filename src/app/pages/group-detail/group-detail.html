@@ -1,0 +1,106 @@
+<div class="topbar">
+  <a class="btn ghost sm" routerLink="/app/grupos">
+    <app-icon name="arrowLeft" [size]="17" />
+    Volver a grupos
+  </a>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid" aria-busy="true">
+    <span class="sr-only">Cargando el grupo…</span>
+    <div class="card c8">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+    </div>
+    <div class="card c4">
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+    </div>
+  </div>
+} @else if (group(); as g) {
+  <div class="grid">
+    <section class="card c8" aria-labelledby="group-name">
+      <div class="section-head">
+        <div>
+          <h1 id="group-name" class="mt-0">{{ g.name }}</h1>
+          <span class="pill brand">{{ g.subject }}</span>
+          @if (g.isPrivate) {
+            <span class="pill">Privado</span>
+          }
+        </div>
+        @if (g.joined) {
+          <span class="pill success">
+            <app-icon name="check" [size]="13" />
+            Eres miembro
+          </span>
+        }
+      </div>
+
+      <p class="muted">{{ g.description }}</p>
+
+      <div class="fact-grid">
+        <div>
+          <span class="mini muted">Miembros</span>
+          <strong>{{ g.memberCount }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Se reúnen</span>
+          <strong>{{ g.meetingSchedule }}</strong>
+        </div>
+        <div>
+          <span class="mini muted">Tipo</span>
+          <strong>{{ g.isPrivate ? 'Privado' : 'Abierto' }}</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        @if (g.joined) {
+          <button type="button" class="btn subtle" [disabled]="busy()" (click)="leave()">
+            @if (busy()) {
+              <span class="spinner sm" aria-hidden="true"></span>
+              <span>Saliendo…</span>
+            } @else {
+              <span>Salir del grupo</span>
+            }
+          </button>
+          <button type="button" class="btn" (click)="comingSoon('El chat del grupo')">
+            <app-icon name="messages" [size]="17" />
+            Abrir chat del grupo
+          </button>
+        } @else {
+          <button type="button" class="btn" [disabled]="busy()" (click)="join()">
+            @if (busy()) {
+              <span class="spinner sm on-brand" aria-hidden="true"></span>
+              <span>Uniéndote…</span>
+            } @else {
+              <span>Unirme al grupo</span>
+            }
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="card c4" aria-labelledby="members-title">
+      <h2 id="members-title">Miembros</h2>
+      @if (members().length === 0) {
+        <p class="muted mini">Aún no hay una lista pública de miembros para este grupo.</p>
+      } @else {
+        @for (m of members(); track m.id) {
+          <div class="row">
+            <span style="display: flex; align-items: center; gap: 10px">
+              <span class="avatar sm" aria-hidden="true">{{ m.initials }}</span>
+              {{ m.name }}
+            </span>
+            @if (m.role === 'admin') {
+              <span class="pill">Admin</span>
+            }
+          </div>
+        }
+      }
+    </section>
+  </div>
+}

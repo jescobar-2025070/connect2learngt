@@ -1,0 +1,138 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Encuentra al tutor ideal</h1>
+    <p class="muted mt-0">
+      Educadores verificados, listos para ayudarte a alcanzar tus metas de aprendizaje.
+    </p>
+  </div>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="grid">
+  <aside class="card c4" aria-labelledby="filters-title">
+    <h2 id="filters-title">Filtros</h2>
+
+    <form (ngSubmit)="search()">
+      <div class="field">
+        <label for="q">Buscar</label>
+        <input
+          id="q"
+          name="q"
+          class="input"
+          placeholder="Nombre o materia…"
+          [(ngModel)]="query"
+        />
+      </div>
+
+      <div class="field">
+        <label for="subject">Materia</label>
+        <select id="subject" name="subject" class="input" [(ngModel)]="subject">
+          <option value="">Todas las materias</option>
+          @for (s of subjects; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="maxPrice">Precio máximo por hora (USD)</label>
+        <input
+          id="maxPrice"
+          name="maxPrice"
+          type="number"
+          min="0"
+          class="input"
+          placeholder="Ej. 25"
+          [(ngModel)]="maxPrice"
+        />
+      </div>
+
+      <div class="field">
+        <label for="minRating">Calificación mínima</label>
+        <select id="minRating" name="minRating" class="input" [(ngModel)]="minRating">
+          <option [ngValue]="null">Cualquiera</option>
+          <option [ngValue]="4.5">4.5 o más</option>
+          <option [ngValue]="4.8">4.8 o más</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn block" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Buscando…</span>
+        } @else {
+          <span>Aplicar filtros</span>
+        }
+      </button>
+      <button type="button" class="btn ghost block" style="margin-top: 8px" (click)="clearFilters()">
+        Limpiar filtros
+      </button>
+    </form>
+  </aside>
+
+  <section class="c8" aria-labelledby="results-title" aria-live="polite" [attr.aria-busy]="loading()">
+    <h2 id="results-title" class="sr-only">Resultados de tutores</h2>
+
+    @if (loading()) {
+      @for (i of [1, 2, 3]; track i) {
+        <div class="card tutor-card">
+          <div class="skeleton circle"></div>
+          <div style="flex: 1">
+            <div class="skeleton title"></div>
+            <div class="skeleton line"></div>
+            <div class="skeleton line short"></div>
+          </div>
+        </div>
+      }
+    } @else if (tutors().length === 0) {
+      <div class="empty">
+        <p><strong>No encontramos tutores con esos filtros.</strong></p>
+        <p class="mini">Prueba ampliando el precio máximo o quitando la materia.</p>
+        <button type="button" class="btn ghost" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+    } @else {
+      <p class="muted mini">{{ tutors().length }} tutores disponibles</p>
+      @for (t of tutors(); track t.id) {
+        <article class="card tutor-card">
+          <span class="avatar lg" aria-hidden="true">{{ t.initials }}</span>
+
+          <div class="tutor-main">
+            <div class="tutor-head">
+              <h3 class="mt-0">{{ t.name }}</h3>
+              @if (t.verified) {
+                <span class="pill success">
+                  <app-icon name="check" [size]="13" />
+                  Verificado
+                </span>
+              }
+            </div>
+            <p class="rating mt-0">
+              ★ {{ t.rating }}
+              <span class="muted mini">({{ t.reviews }} reseñas · {{ t.sessionsGiven }} sesiones)</span>
+            </p>
+            <p class="muted mini">{{ t.headline }}</p>
+            <div class="chips-inline">
+              @for (s of t.subjects; track s) {
+                <span class="pill">{{ s }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="tutor-cta">
+            <p class="price">
+              <strong>${{ t.pricePerHour }}</strong>
+              <span class="mini muted">/hora</span>
+            </p>
+            <a class="btn" [routerLink]="['/app/tutores', t.id]">Ver perfil</a>
+          </div>
+        </article>
+      }
+
+      <button type="button" class="btn ghost block" (click)="comingSoon('Cargar más resultados')">
+        Cargar más tutores
+      </button>
+    }
+  </section>
+</div>
