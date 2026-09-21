@@ -40,7 +40,8 @@
           </div>
           <p class="muted mt-0">{{ t.headline }}</p>
           <p class="rating mt-0">
-            ★ {{ t.rating }}
+            <app-icon name="star" [size]="15" aria-hidden="true" />
+            {{ t.rating }}
             <span class="muted mini">({{ t.reviews }} reseñas)</span>
           </p>
         </div>
@@ -74,11 +75,11 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="btn subtle" (click)="comingSoon('El chat con el tutor')">
+        <button type="button" class="btn subtle" (click)="chatWithTutor(t.id)">
           <app-icon name="messages" [size]="17" />
           Enviar mensaje
         </button>
-        <button type="button" class="btn subtle" (click)="comingSoon('Las reseñas completas')">
+        <button type="button" class="btn subtle" (click)="openReviews(t.id)">
           Ver reseñas
         </button>
       </div>
@@ -163,4 +164,37 @@
       </button>
     </section>
   </div>
+}
+
+@if (showReviews()) {
+  <app-modal [open]="true" title="Reseñas de los estudiantes" (close)="showReviews.set(false)">
+    @if (reviewsLoading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando reseñas…</span>
+        <div class="skeleton line"></div>
+        <div class="skeleton line medium"></div>
+        <div class="skeleton line short"></div>
+      </div>
+    } @else if (reviews().length === 0) {
+      <div class="empty">
+        <p><strong>Aún no hay reseñas para este tutor.</strong></p>
+        <p class="mini">Las primeras reseñas aparecerán aquí después de las primeras sesiones.</p>
+      </div>
+    } @else {
+      @for (r of reviews(); track r.id) {
+        <div class="review">
+          <div class="review-head">
+            <span class="avatar sm" aria-hidden="true">{{ initialsOf(r.author) }}</span>
+            <strong>{{ r.author }}</strong>
+            <span class="mini muted">· {{ r.timeAgo }}</span>
+            <span class="review-rating">
+            <app-icon name="star" [size]="13" aria-hidden="true" />
+            {{ r.rating }}.0
+          </span>
+          </div>
+          <p class="review-comment">{{ r.comment }}</p>
+        </div>
+      }
+    }
+  </app-modal>
 }

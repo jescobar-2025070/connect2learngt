@@ -43,10 +43,22 @@
 
       <div class="actions confirm-actions">
         <a class="btn" routerLink="/app/inicio">Ir a mi panel</a>
-        <button type="button" class="btn subtle" (click)="comingSoon('Añadir al calendario')">
-          <app-icon name="calendar" [size]="17" />
-          Añadir al calendario
-        </button>
+        @if (addedToCalendar()) {
+          <span class="calendar-added">
+            <app-icon name="check" [size]="16" />
+            Añadida al calendario
+          </span>
+        } @else {
+          <button type="button" class="btn subtle" [disabled]="addingToCalendar()" (click)="addToCalendar()">
+            @if (addingToCalendar()) {
+              <span class="spinner sm" aria-hidden="true"></span>
+              <span>Añadiendo…</span>
+            } @else {
+              <app-icon name="calendar" [size]="17" />
+              Añadir al calendario
+            }
+          </button>
+        }
       </div>
     </div>
   } @else {

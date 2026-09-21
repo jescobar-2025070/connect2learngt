@@ -5,12 +5,13 @@ import { ToastService } from '../../core/toast.service';
 import { ResourceItem } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+import { ModalComponent } from '../../shared/modal';
 
 const TYPES = ['Todos', 'PDF', 'Video', 'Guía', 'Ejercicios'];
 
 @Component({
   selector: 'app-resources',
-  imports: [FormsModule, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, IconComponent, ThemeToggleComponent, ModalComponent],
   templateUrl: './resources.html',
 })
 export class ResourcesPage {
@@ -31,6 +32,17 @@ export class ResourcesPage {
     );
   });
 
+  // Subida simulada
+  readonly showUpload = signal(false);
+  readonly uploading = signal(false);
+  uploadType = 'Guía';
+  uploadTitle = '';
+  uploadSubject = '';
+  uploadDescription = '';
+
+  // Descarga simulada
+  readonly downloadingId = signal<string | null>(null);
+
   constructor() {
     this.load('Todos');
   }
@@ -48,11 +60,53 @@ export class ResourcesPage {
     });
   }
 
-  download(resource: ResourceItem): void {
-    this.toast.comingSoon(`La descarga de "${resource.title}"`);
+  openUpload(): void {
+    this.uploadType = 'Guía';
+    this.uploadTitle = '';
+    this.uploadSubject = '';
+    this.uploadDescription = '';
+    this.showUpload.set(true);
   }
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  closeUpload(): void {
+    if (this.uploading()) return;
+    this.showUpload.set(false);
+  }
+
+  submitUpload(): void {
+    const title = this.uploadTitle.trim();
+    const subject = this.uploadSubject.trim();
+    const description = this.uploadDescription.trim();
+    if (!title || !subject || this.uploading()) return;
+
+    this.uploading.set(true);
+    this.catalog
+      .uploadResource({
+        type: this.uploadType as ResourceItem['type'],
+        title,
+        subject,
+        description,
+      })
+      .subscribe((created) => {
+        this.resources.update((list) => [created, ...list]);
+        this.uploading.set(false);
+        this.showUpload.set(false);
+        this.toast.success('Recurso publicado. Ya está disponible en la biblioteca.');
+      });
+  }
+
+  download(resource: ResourceItem): void {
+    if (this.downloadingId()) return;
+    this.downloadingId.set(resource.id);
+    this.catalog.downloadResource(resource.id).subscribe((updated) => {
+      if (!updated) return;
+      this.resources.update((list) => list.map((r) => (r.id === updated.id ? updated : r)));
+      this.downloadingId.set(null);
+      this.toast.success(`Descarga de "${updated.title}" iniciada.`);
+    });
+  }
+
+  formatDownloads(count: number): string {
+    return count.toLocaleString('es');
   }
 }

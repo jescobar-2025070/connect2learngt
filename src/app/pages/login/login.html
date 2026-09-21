@@ -64,16 +64,21 @@
       </button>
 
       <button type="button" class="btn ghost block" (click)="demoLogin()" [disabled]="loading()">
-        Entrar con la cuenta demo
+        Entrar como Maria Lopez
       </button>
 
       <button
         type="button"
         class="btn subtle block"
-        (click)="comingSoon('El acceso con Google')"
-        [disabled]="loading()"
+        (click)="googleLogin()"
+        [disabled]="loading() || googleLoading()"
       >
-        Continuar con Google
+        @if (googleLoading()) {
+          <span class="spinner sm" aria-hidden="true"></span>
+          <span>Conectando con Google…</span>
+        } @else {
+          <span>Continuar con Google</span>
+        }
       </button>
     </form>
 
@@ -81,9 +86,62 @@
       ¿No tienes cuenta? <a routerLink="/registro">Regístrate</a>
     </p>
     <p class="center-text mini mt-0">
-      <button type="button" class="link-btn" (click)="comingSoon('La recuperación de contraseña')">
+      <button type="button" class="link-btn" (click)="openRecovery()">
         ¿Olvidaste tu contraseña?
       </button>
     </p>
   </div>
 </main>
+
+@if (showRecovery()) {
+  <app-modal [open]="true" title="Recuperar contraseña" (close)="closeRecovery()">
+    @if (recoverySent()) {
+      <div class="center-text">
+        <span class="confirm-badge" style="margin-top: 8px" aria-hidden="true">
+          <app-icon name="check" [size]="28" [strokeWidth]="2.6" />
+        </span>
+        <h2 class="mt-0">Revisa tu correo</h2>
+        <p class="muted">
+          Enviamos un enlace seguro a <strong>{{ recoveryEmail.trim() }}</strong>. Revisa tu
+          bandeja de entrada y sigue las instrucciones para crear una contraseña nueva.
+        </p>
+        <button type="button" class="btn block" (click)="closeRecovery()">Entendido</button>
+      </div>
+    } @else {
+      <p class="muted mini" style="margin-top: 0">
+        Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.
+      </p>
+      <div class="field">
+        <label for="recoveryEmail">Correo electrónico</label>
+        <input
+          id="recoveryEmail"
+          name="recoveryEmail"
+          type="email"
+          class="input"
+          autocomplete="email"
+          placeholder="tu@correo.com"
+          [(ngModel)]="recoveryEmail"
+        />
+      </div>
+      @if (recoveryError()) {
+        <p class="field-error" role="alert">{{ recoveryError() }}</p>
+      }
+      <div class="actions" style="justify-content: flex-end">
+        <button type="button" class="btn ghost" (click)="closeRecovery()">Cancelar</button>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="!recoveryEmail.trim() || recoverySending()"
+          (click)="sendRecovery()"
+        >
+          @if (recoverySending()) {
+            <span class="spinner sm on-brand" aria-hidden="true"></span>
+            <span>Enviando…</span>
+          } @else {
+            <span>Enviar enlace</span>
+          }
+        </button>
+      </div>
+    }
+  </app-modal>
+}

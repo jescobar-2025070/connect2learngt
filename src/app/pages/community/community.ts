@@ -1,10 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
-import { CommunityPost } from '../../core/models';
+import { CommunityPost, CommunityReply } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
@@ -29,12 +29,27 @@ export class CommunityPage {
   readonly trending = this.catalog.getTrendingTopics();
   readonly likedIds = signal<Set<string>>(new Set());
 
+  readonly repliesByPost = signal<Record<string, CommunityReply[]>>({});
+  readonly openReplies = signal<Set<string>>(new Set());
+  readonly loadingReplies = signal<string | null>(null);
+  readonly replyingPostId = signal<string | null>(null);
+  readonly replyDrafts: Record<string, string> = {};
+
   draft = '';
   topic = 'General';
 
   constructor() {
     this.load();
   }
+
+  /** Lista visible según el filtro activo ("Recientes" o "Mis publicaciones"). */
+  readonly visiblePosts = computed(() => {
+    if (this.filter() === 'mine') {
+      const me = this.student()?.name;
+      return this.posts().filter((p) => p.author === me);
+    }
+    return this.posts();
+  });
 
   load(): void {
     this.loading.set(true);
@@ -47,7 +62,10 @@ export class CommunityPage {
   setFilter(value: 'recent' | 'mine'): void {
     this.filter.set(value);
     if (value === 'mine') {
-      this.toast.comingSoon('El filtro "Mis publicaciones"');
+      const mine = this.posts().filter((p) => p.author === this.student()?.name);
+      if (mine.length === 0) {
+        this.toast.show('Aún no tienes publicaciones: escribe la primera arriba.');
+      }
     }
   }
 
@@ -69,12 +87,12 @@ export class CommunityPage {
       replies: 0,
     };
 
-    setTimeout(() => {
+    this.catalog.addPost(newPost).subscribe(() => {
       this.posts.update((list) => [newPost, ...list]);
       this.draft = '';
       this.posting.set(false);
       this.toast.success('Tu publicación ya es visible para la comunidad.');
-    }, 1100);
+    });
   }
 
   toggleLike(post: CommunityPost): void {
@@ -91,7 +109,50 @@ export class CommunityPage {
     return this.likedIds().has(post.id);
   }
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  isOpen(post: CommunityPost): boolean {
+    return this.openReplies().has(post.id);
+  }
+
+  repliesOf(post: CommunityPost): CommunityReply[] {
+    return this.repliesByPost()[post.id] ?? [];
+  }
+
+  toggleReplies(post: CommunityPost): void {
+    const open = new Set(this.openReplies());
+    if (open.has(post.id)) {
+      open.delete(post.id);
+      this.openReplies.set(open);
+      return;
+    }
+    open.add(post.id);
+    this.openReplies.set(open);
+    this.loadingReplies.set(post.id);
+    this.catalog.getPostReplies(post.id).subscribe((list) => {
+      this.repliesByPost.update((map) => ({ ...map, [post.id]: list }));
+      this.loadingReplies.set(null);
+    });
+  }
+
+  sendReply(post: CommunityPost): void {
+    const text = (this.replyDrafts[post.id] ?? '').trim();
+    if (!text || this.replyingPostId() === post.id) return;
+
+    this.replyingPostId.set(post.id);
+    const student = this.student();
+    this.catalog
+      .addReply(post.id, {
+        author: student?.name ?? 'Tú',
+        initials: student?.initials ?? 'TU',
+        text,
+      })
+      .subscribe((reply) => {
+        this.repliesByPost.update((map) => ({ ...map, [post.id]: [...(map[post.id] ?? []), reply] }));
+        this.replyDrafts[post.id] = '';
+        this.posts.update((list) =>
+          list.map((p) => (p.id === post.id ? { ...p, replies: p.replies + 1 } : p)),
+        );
+        this.replyingPostId.set(null);
+        this.toast.success('Tu respuesta se publicó en el hilo.');
+      });
   }
 }

@@ -79,6 +79,25 @@ export class SessionService {
     });
   }
 
+  /** Edita los datos personales del perfil (nombre, edad, institución, grado). */
+  updateProfile(data: Partial<StudentProfile>): Observable<StudentProfile> {
+    return new Observable<StudentProfile>((subscriber) => {
+      const timer = setTimeout(() => {
+        this._student.update((s) => {
+          if (!s) return s;
+          const next = { ...s, ...data };
+          if (data.name) next.initials = this.initialsOf(data.name);
+          return next;
+        });
+        this.persist();
+        const updated = this._student();
+        if (updated) subscriber.next(updated);
+        subscriber.complete();
+      }, 1100);
+      return () => clearTimeout(timer);
+    });
+  }
+
   /** Confirma una reserva de tutoría y la deja disponible en el panel. */
   confirmBooking(booking: Booking): Observable<Booking> {
     return new Observable<Booking>((subscriber) => {

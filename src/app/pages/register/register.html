@@ -138,10 +138,15 @@
       <button
         type="button"
         class="btn subtle block"
-        (click)="comingSoon('El registro con Google')"
-        [disabled]="loading()"
+        (click)="googleRegister()"
+        [disabled]="loading() || googleLoading()"
       >
-        Registrarse con Google
+        @if (googleLoading()) {
+          <span class="spinner sm" aria-hidden="true"></span>
+          <span>Conectando con Google…</span>
+        } @else {
+          <span>Registrarse con Google</span>
+        }
       </button>
     </form>
 

@@ -94,7 +94,7 @@
       </div>
     } @else {
       <p class="muted mini">{{ tutors().length }} tutores disponibles</p>
-      @for (t of tutors(); track t.id) {
+      @for (t of visibleTutors(); track t.id) {
         <article class="card tutor-card">
           <span class="avatar lg" aria-hidden="true">{{ t.initials }}</span>
 
@@ -109,7 +109,8 @@
               }
             </div>
             <p class="rating mt-0">
-              ★ {{ t.rating }}
+              <app-icon name="star" [size]="15" aria-hidden="true" />
+              {{ t.rating }}
               <span class="muted mini">({{ t.reviews }} reseñas · {{ t.sessionsGiven }} sesiones)</span>
             </p>
             <p class="muted mini">{{ t.headline }}</p>
@@ -130,9 +131,11 @@
         </article>
       }
 
-      <button type="button" class="btn ghost block" (click)="comingSoon('Cargar más resultados')">
-        Cargar más tutores
-      </button>
+      @if (remaining() > 0) {
+        <button type="button" class="btn ghost block" (click)="loadMore()">
+          Cargar más tutores ({{ remaining() }} restantes)
+        </button>
+      }
     }
   </section>
 </div>

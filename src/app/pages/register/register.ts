@@ -6,6 +6,11 @@ import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
+const GOOGLE_PROFILE = {
+  name: 'Camila Rojas',
+  email: 'camila.rojas@gmail.com',
+};
+
 @Component({
   selector: 'app-register',
   imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent],
@@ -25,6 +30,7 @@ export class RegisterPage {
   terms = false;
 
   readonly loading = signal(false);
+  readonly googleLoading = signal(false);
   readonly submitted = signal(false);
 
   get nameInvalid(): boolean {
@@ -70,6 +76,24 @@ export class RegisterPage {
         this.toast.success('¡Cuenta creada! Personalicemos tu experiencia.');
         this.router.navigate(['/intereses']);
       });
+  }
+
+  /** Registro simulado con Google: rellena el formulario con la cuenta demo. */
+  googleRegister(): void {
+    if (this.googleLoading()) return;
+    this.googleLoading.set(true);
+    setTimeout(() => {
+      this.googleLoading.set(false);
+      this.name = GOOGLE_PROFILE.name;
+      this.email = GOOGLE_PROFILE.email;
+      this.password = 'google-secreto';
+      this.age = 17;
+      this.institution = 'Colegio San Marcos';
+      this.grade = '5to Bachillerato';
+      this.terms = true;
+      this.toast.success(`Cuenta de Google de ${GOOGLE_PROFILE.name} seleccionada.`);
+      this.submit();
+    }, 1200);
   }
 
   comingSoon(feature: string): void {

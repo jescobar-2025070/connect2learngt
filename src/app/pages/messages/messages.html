@@ -46,10 +46,10 @@
           type="button"
           class="icon-btn"
           style="margin-left: auto"
-          (click)="comingSoon('La videollamada')"
+          (click)="openCall()"
           aria-label="Iniciar videollamada"
         >
-          <app-icon name="tutors" [size]="18" />
+          <app-icon name="video" [size]="18" />
         </button>
       </div>
 
@@ -96,3 +96,12 @@
     }
   </section>
 </div>
+
+@if (callOpen()) {
+  <app-video-call
+    [open]="true"
+    [name]="callTarget()?.name ?? ''"
+    [initials]="callTarget()?.initials ?? ''"
+    (close)="closeCall()"
+  />
+}

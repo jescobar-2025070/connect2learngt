@@ -2,12 +2,14 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../core/catalog.service';
 import { ToastService } from '../../core/toast.service';
-import { Guardian, SharingPreference } from '../../core/models';
+import { AccessEntry, Guardian, SharingPreference } from '../../core/models';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+import { ModalComponent } from '../../shared/modal';
+import { IconComponent } from '../../shared/icon';
 
 @Component({
   selector: 'app-family',
-  imports: [FormsModule, ThemeToggleComponent],
+  imports: [FormsModule, ThemeToggleComponent, ModalComponent, IconComponent],
   templateUrl: './family.html',
 })
 export class FamilyPage {
@@ -20,6 +22,11 @@ export class FamilyPage {
   readonly revokingId = signal<string | null>(null);
   readonly confirmingRevokeId = signal<string | null>(null);
   readonly savingPrefId = signal<string | null>(null);
+
+  // Historial de accesos
+  readonly showHistory = signal(false);
+  readonly historyLoading = signal(false);
+  readonly history = signal<AccessEntry[]>([]);
 
   inviteEmail = '';
   readonly inviting = signal(false);
@@ -41,6 +48,15 @@ export class FamilyPage {
       this.preferences.set(list);
       prefsReady = true;
       checkDone();
+    });
+  }
+
+  openHistory(): void {
+    this.historyLoading.set(true);
+    this.showHistory.set(true);
+    this.catalog.getAccessHistory().subscribe((list) => {
+      this.history.set(list);
+      this.historyLoading.set(false);
     });
   }
 
@@ -92,9 +108,5 @@ export class FamilyPage {
       }
       this.savingPrefId.set(null);
     });
-  }
-
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
   }
 }

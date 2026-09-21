@@ -44,7 +44,8 @@
     } @else {
       @for (r of rewards(); track r.id) {
         <div class="row">
-          <span>{{ r.icon }} {{ r.label }}</span>
+          <span class="reward-ico" aria-hidden="true"><app-icon [name]="r.icon" [size]="17" /></span>
+          <span>{{ r.label }}</span>
           <strong class="reward-points">{{ r.points }}</strong>
         </div>
       }
@@ -69,7 +70,7 @@
       <div class="grid">
         @for (a of achievements(); track a.id) {
           <div class="card c3 badge-card" [class.locked]="!a.unlocked">
-            <span class="badge-icon" aria-hidden="true">{{ a.icon }}</span>
+            <span class="badge-icon" aria-hidden="true"><app-icon [name]="a.icon" [size]="26" [strokeWidth]="1.6" /></span>
             <h3>
               {{ a.title }}
               @if (!a.unlocked) {
@@ -81,7 +82,7 @@
               <button
                 type="button"
                 class="btn ghost sm block"
-                (click)="comingSoon('El seguimiento de este logro')"
+                (click)="openTracking(a)"
               >
                 Ver cómo desbloquear
               </button>
@@ -92,3 +93,59 @@
     }
   </section>
 </div>
+
+@if (tracking(); as ach) {
+  <app-modal [open]="true" title="Cómo desbloquear este logro" (close)="tracking.set(null)">
+    <div class="achieve-focus">
+      <span class="badge-icon" aria-hidden="true">
+        <app-icon [name]="ach.icon" [size]="30" [strokeWidth]="1.6" />
+      </span>
+      <h2 class="mt-0">{{ ach.title }}</h2>
+      <p class="muted mini mt-0">{{ ach.description }}</p>
+    </div>
+
+    @if (progressOf(ach) > 0) {
+      <div
+        class="bar"
+        role="progressbar"
+        [attr.aria-valuenow]="progressOf(ach)"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-label]="'Progreso del logro ' + ach.title"
+      >
+        <i [style.width.%]="progressOf(ach)"></i>
+      </div>
+      <p class="hint">{{ progressOf(ach) }}% completado</p>
+    }
+
+    <div class="steps">
+      @for (step of stepsOf(ach); track step.text; let i = $index) {
+        <div class="step" [class.done]="step.status === 'done'" [attr.aria-current]="step.status === 'current' ? 'step' : null">
+          <span class="step-ico" aria-hidden="true">
+            @if (step.status === 'done') {
+              <app-icon name="check" [size]="16" />
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+          <span class="step-body">
+            <strong>{{ step.text }}</strong>
+          </span>
+          <span class="step-status">
+            @if (step.status === 'done') {
+              <span class="mini" style="color: var(--success)">Listo</span>
+            } @else if (step.status === 'current') {
+              <span class="mini" style="color: var(--brand)">En curso</span>
+            } @else {
+              <span class="mini muted">Pendiente</span>
+            }
+          </span>
+        </div>
+      }
+    </div>
+
+    <p class="hint" style="margin-top: 14px">
+      El progreso se actualiza según tu actividad en la plataforma.
+    </p>
+  </app-modal>
+}

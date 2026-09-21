@@ -4,13 +4,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
-import { Booking, Tutor, TutorSlot } from '../../core/models';
+import { Booking, Tutor, TutorReview, TutorSlot } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+import { ModalComponent } from '../../shared/modal';
 
 @Component({
   selector: 'app-tutor-detail',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent, ModalComponent],
   templateUrl: './tutor-detail.html',
 })
 export class TutorDetailPage {
@@ -25,6 +26,11 @@ export class TutorDetailPage {
   readonly loading = signal(true);
   readonly booking = signal(false);
   readonly selectedSlotId = signal<string | null>(null);
+
+  // Reseñas completas
+  readonly showReviews = signal(false);
+  readonly reviewsLoading = signal(false);
+  readonly reviews = signal<TutorReview[]>([]);
 
   goal = '';
   modality = 'Videollamada';
@@ -67,6 +73,30 @@ export class TutorDetailPage {
   selectSlot(slot: TutorSlot): void {
     if (!slot.available) return;
     this.selectedSlotId.set(slot.id);
+  }
+
+  /** Abre el chat con el tutor (simulado con un hilo por defecto). */
+  chatWithTutor(id: string): void {
+    this.router.navigate(['/app/mensajes'], { queryParams: { tutor: id } });
+  }
+
+  openReviews(id: string): void {
+    this.reviewsLoading.set(true);
+    this.showReviews.set(true);
+    this.catalog.getTutorReviews(id).subscribe((list) => {
+      this.reviews.set(list);
+      this.reviewsLoading.set(false);
+    });
+  }
+
+  /** Iniciales del autor de una reseña (no viajan en el mock). */
+  initialsOf(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join('');
   }
 
   confirm(): void {

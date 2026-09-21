@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
@@ -15,7 +15,17 @@ export class BookingConfirmedPage {
 
   readonly booking = this.session.nextBooking;
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  /** Simula la descarga de un archivo .ics / evento de Google Calendar. */
+  readonly addingToCalendar = signal(false);
+  readonly addedToCalendar = signal(false);
+
+  addToCalendar(): void {
+    if (this.addingToCalendar()) return;
+    this.addingToCalendar.set(true);
+    setTimeout(() => {
+      this.addingToCalendar.set(false);
+      this.addedToCalendar.set(true);
+      this.toast.success('Sesión añadida a tu calendario.');
+    }, 1100);
   }
 }

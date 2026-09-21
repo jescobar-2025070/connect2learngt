@@ -1,17 +1,17 @@
 <div class="topbar">
   <div class="page-head">
-    <h1>Hola, {{ firstName }} 👋</h1>
+    <h1>Hola, {{ firstName }}</h1>
     <p class="muted mt-0">¿Listo para seguir aprendiendo hoy?</p>
   </div>
   <div class="top-actions">
-    <button type="button" class="icon-btn" (click)="comingSoon('La búsqueda global')" aria-label="Buscar">
+    <button type="button" class="icon-btn" (click)="openSearch()" aria-label="Buscar en todas las secciones">
       <app-icon name="search" [size]="19" />
     </button>
     <button
       type="button"
       class="icon-btn"
-      (click)="comingSoon('El centro de notificaciones')"
-      aria-label="Notificaciones"
+      (click)="openNotifications()"
+      aria-label="Abrir centro de notificaciones"
     >
       <app-icon name="bell" [size]="19" />
     </button>
@@ -61,10 +61,11 @@
           <span>{{ booking.modality }}</span>
         </p>
         <div class="actions">
-          <button type="button" class="btn" (click)="comingSoon('La sala de videollamada')">
+          <button type="button" class="btn" (click)="openCall(booking)" [disabled]="callOpen()">
+            <app-icon name="video" [size]="17" />
             Unirme a la sala
           </button>
-          <button type="button" class="btn subtle" (click)="comingSoon('El material de la sesión')">
+          <button type="button" class="btn subtle" (click)="openMaterials()">
             Ver materiales
           </button>
         </div>
@@ -148,10 +149,212 @@
       <span class="avatar xl" style="margin: 0 auto" aria-hidden="true">
         {{ s.featuredTutor.initials }}
       </span>
-      <p class="rating" style="margin-top: 10px">★ {{ s.featuredTutor.rating }}</p>
+      <p class="rating" style="margin-top: 10px">
+        <app-icon name="star" [size]="15" aria-hidden="true" />
+        {{ s.featuredTutor.rating }}
+      </p>
       <h2 id="featured-tutor-title">{{ s.featuredTutor.name }}</h2>
       <p class="muted mini">{{ s.featuredTutor.headline }}</p>
       <a class="btn block" [routerLink]="['/app/tutores', s.featuredTutor.id]">Agendar sesión</a>
     </section>
   </div>
+}
+
+@if (searchOpen()) {
+  <app-modal [open]="true" title="Búsqueda global" (close)="searchOpen.set(false)">
+    <div class="search-modal">
+      <div class="field">
+        <label for="globalSearch">Buscar en toda la plataforma</label>
+        <input
+          id="globalSearch"
+          class="input search-input-lg"
+          placeholder="Tutores, recursos, grupos o publicaciones…"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </div>
+
+      @if (searchLoading()) {
+        <div aria-busy="true">
+          <span class="sr-only">Cargando resultados…</span>
+          <div class="skeleton line medium"></div>
+          <div class="skeleton line short"></div>
+          <div class="skeleton line"></div>
+        </div>
+      } @else if (searchResults(); as results) {
+        @if (!searchQuery().trim()) {
+          <p class="muted mini">Escribe para buscar en tutores, recursos, grupos y comunidad.</p>
+        } @else if (results.total === 0) {
+          <div class="search-empty">
+            No encontramos resultados para "{{ searchQuery() }}". Prueba con otra palabra.
+          </div>
+        } @else {
+          <p class="muted mini">{{ results.total }} resultado{{ results.total === 1 ? '' : 's' }}</p>
+          <div class="search-groups">
+            @if (results.tutors.length) {
+              <div>
+                <p class="search-group-label">Tutores</p>
+                <div class="search-list">
+                  @for (t of results.tutors; track t.id) {
+                    <button type="button" class="search-item" (click)="goTutor(t.id)">
+                      <span class="avatar sm" aria-hidden="true">{{ t.initials }}</span>
+                      <span class="search-sub">
+                        <strong>{{ t.name }}</strong>
+                        <span class="mini muted">{{ t.headline }} · <app-icon name="star" [size]="12" aria-hidden="true" /> {{ t.rating }}</span>
+                      </span>
+                      <app-icon name="arrowRight" [size]="16" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (results.resources.length) {
+              <div>
+                <p class="search-group-label">Recursos</p>
+                <div class="search-list">
+                  @for (r of results.resources; track r.id) {
+                    <button type="button" class="search-item" (click)="goSection('/app/recursos')">
+                      <span class="avatar sm empty-state-icon" aria-hidden="true">
+                        <app-icon name="download" [size]="15" />
+                      </span>
+                      <span class="search-sub">
+                        <strong>{{ r.title }}</strong>
+                        <span class="mini muted">{{ r.subject }} · {{ r.type }}</span>
+                      </span>
+                      <app-icon name="arrowRight" [size]="16" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (results.groups.length) {
+              <div>
+                <p class="search-group-label">Grupos de estudio</p>
+                <div class="search-list">
+                  @for (g of results.groups; track g.id) {
+                    <button type="button" class="search-item" (click)="goGroup(g.id)">
+                      <span class="avatar sm empty-state-icon" aria-hidden="true">
+                        <app-icon name="users" [size]="15" />
+                      </span>
+                      <span class="search-sub">
+                        <strong>{{ g.name }}</strong>
+                        <span class="mini muted">{{ g.subject }} · {{ g.memberCount }} miembros</span>
+                      </span>
+                      <app-icon name="arrowRight" [size]="16" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (results.posts.length) {
+              <div>
+                <p class="search-group-label">Publicaciones de la comunidad</p>
+                <div class="search-list">
+                  @for (p of results.posts; track p.id) {
+                    <button type="button" class="search-item" (click)="goSection('/app/comunidad')">
+                      <span class="avatar sm" aria-hidden="true">{{ p.initials }}</span>
+                      <span class="search-sub">
+                        <strong>{{ p.author }}</strong>
+                        <span class="mini muted">{{ p.topic }} · {{ p.content }}</span>
+                      </span>
+                      <app-icon name="arrowRight" [size]="16" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </app-modal>
+}
+
+@if (notifOpen()) {
+  <app-modal [open]="true" title="Notificaciones" (close)="notifOpen.set(false)">
+    <div class="section-head" style="margin-bottom: 4px">
+      <p class="muted mini mt-0" style="margin: 0">
+        @if (hasUnread) {
+          Tienes avisos sin leer.
+        } @else {
+          Estás al día.
+        }
+      </p>
+      <button
+        type="button"
+        class="btn ghost sm"
+        [disabled]="!hasUnread || notifLoading()"
+        (click)="markAllRead()"
+      >
+        Marcar todas como leídas
+      </button>
+    </div>
+
+    @if (notifLoading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando notificaciones…</span>
+        @for (i of [1, 2, 3]; track i) {
+          <div class="skeleton line medium"></div>
+          <div class="skeleton line short"></div>
+        }
+      </div>
+    } @else {
+      <div class="ntf-list">
+        @for (n of notifications(); track n.id) {
+          <div class="ntf-item">
+            <span class="ntf-icon" aria-hidden="true"><app-icon [name]="n.icon" [size]="17" /></span>
+            <div class="ntf-text">
+              <span>{{ n.text }}</span>
+              <span class="mini muted ntf-time">{{ n.timeAgo }}</span>
+            </div>
+            @if (n.unread) {
+              <span class="ntf-dot" aria-label="Sin leer"></span>
+            }
+          </div>
+        }
+      </div>
+    }
+  </app-modal>
+}
+
+@if (materialsOpen()) {
+  <app-modal [open]="true" title="Materiales de la sesión" (close)="materialsOpen.set(false)">
+    <p class="muted mini" style="margin-top: 0">
+      Recursos sugeridos para preparar tu próxima tutoría.
+    </p>
+    <div class="session-materials">
+      @if (materials().length === 0) {
+        <div class="skeleton line medium"></div>
+        <div class="skeleton line"></div>
+        <div class="skeleton line short"></div>
+      } @else {
+        @for (r of materials(); track r.id) {
+          <div class="material-row">
+            <app-icon name="download" [size]="18" />
+            <div style="flex: 1; min-width: 0">
+              <strong>{{ r.title }}</strong>
+              <span class="mini muted" style="display: block">
+                {{ r.subject }} · {{ r.type }} · {{ r.minutes }} min
+              </span>
+            </div>
+            <a class="btn ghost sm" routerLink="/app/recursos" (click)="materialsOpen.set(false)">
+              Ver
+            </a>
+          </div>
+        }
+      }
+    </div>
+  </app-modal>
+}
+
+@if (callOpen()) {
+  <app-video-call
+    [open]="true"
+    [name]="callTarget()?.name ?? ''"
+    [initials]="callTarget()?.initials ?? ''"
+    (close)="closeCall()"
+  />
 }

@@ -1,7 +1,10 @@
 import {
+  AccessEntry,
   Achievement,
+  AppNotification,
   ChatMessage,
   CommunityPost,
+  CommunityReply,
   Conversation,
   GroupMember,
   Guardian,
@@ -12,6 +15,7 @@ import {
   StudyGroup,
   SubjectProgress,
   Tutor,
+  TutorReview,
   TutorSlot,
 } from './models';
 
@@ -121,6 +125,81 @@ export const TUTORS: Tutor[] = [
     sessionsGiven: 305,
     verified: true,
   },
+  {
+    id: 'tut-006',
+    name: 'Andrés Luna',
+    initials: 'AL',
+    headline: 'Historia moderna y ciencias sociales',
+    bio: 'Historiador y docente. Hago líneas de tiempo y análisis de fuentes para que dejes de memorizar y empieces a conectar las ideas.',
+    subjects: ['Historia', 'Literatura'],
+    rating: 4.6,
+    reviews: 54,
+    pricePerHour: 18,
+    languages: ['Español', 'Portugués'],
+    responseTime: 'Responde en ~5 h',
+    sessionsGiven: 144,
+    verified: false,
+  },
+  {
+    id: 'tut-007',
+    name: 'Natalia Ferrer',
+    initials: 'NF',
+    headline: 'Matemáticas desde cero · cálculo, álgebra y geometría',
+    bio: 'Ingeniera industrial. Si las matemáticas se te hicieron bola, empezamos desde donde estés: sin vergüenza y a tu ritmo.',
+    subjects: ['Matemáticas'],
+    rating: 4.8,
+    reviews: 71,
+    pricePerHour: 24,
+    languages: ['Español'],
+    responseTime: 'Responde en ~1 h',
+    sessionsGiven: 220,
+    verified: true,
+  },
+  {
+    id: 'tut-008',
+    name: 'Ricardo Ochoa',
+    initials: 'RO',
+    headline: 'Inglés conversacional y académico',
+    bio: 'TEFL certificado. Conversación para perder el miedo y escritura académica para aplicar a universidades en el extranjero.',
+    subjects: ['Inglés'],
+    rating: 4.7,
+    reviews: 63,
+    pricePerHour: 26,
+    languages: ['Español', 'Inglés', 'Francés'],
+    responseTime: 'Responde en ~3 h',
+    sessionsGiven: 197,
+    verified: true,
+  },
+  {
+    id: 'tut-009',
+    name: 'Valeria Ríos',
+    initials: 'VR',
+    headline: 'Biología, anatomía y preparación para exámenes',
+    bio: 'Estudiante de microbiología. Trucos visuales y repasos guiados para que los nombres raros dejen de dar miedo.',
+    subjects: ['Biología', 'Química'],
+    rating: 4.9,
+    reviews: 88,
+    pricePerHour: 21,
+    languages: ['Español'],
+    responseTime: 'Responde en ~2 h',
+    sessionsGiven: 276,
+    verified: true,
+  },
+  {
+    id: 'tut-010',
+    name: 'Emilio Torres',
+    initials: 'ET',
+    headline: 'Programación Web · HTML, CSS, JavaScript',
+    bio: 'Front-end developer en una agencia. Proyectos pequeños desde el día uno para que aprendas haciendo, no leyendo.',
+    subjects: ['Programación', 'Diseño'],
+    rating: 4.8,
+    reviews: 104,
+    pricePerHour: 29,
+    languages: ['Español', 'Inglés'],
+    responseTime: 'Responde en ~4 h',
+    sessionsGiven: 312,
+    verified: true,
+  },
 ];
 
 export function buildSlots(): TutorSlot[] {
@@ -158,7 +237,7 @@ export const RESOURCES: ResourceItem[] = [
       'Fórmulas, gráficas explicadas y 12 ejercicios resueltos paso a paso para el primer parcial.',
     author: 'Laura Gómez',
     type: 'PDF',
-    downloads: '1.2k',
+    downloads: 1200,
     minutes: 25,
   },
   {
@@ -169,7 +248,7 @@ export const RESOURCES: ResourceItem[] = [
       'Resumen de la regla de la cadena, producto y cociente con ejemplos cortos y errores comunes.',
     author: 'Diego Paredes',
     type: 'Guía',
-    downloads: '980',
+    downloads: 980,
     minutes: 18,
   },
   {
@@ -180,7 +259,7 @@ export const RESOURCES: ResourceItem[] = [
       'Plantilla de introducción, desarrollo y conclusión, con un ejemplo completo comentado.',
     author: 'Ana Martínez',
     type: 'PDF',
-    downloads: '3.4k',
+    downloads: 3400,
     minutes: 30,
   },
   {
@@ -190,7 +269,7 @@ export const RESOURCES: ResourceItem[] = [
     description: 'Video de 15 minutos con reglas mnemotécnicas para grupos y propiedades.',
     author: 'Sofía Mendoza',
     type: 'Video',
-    downloads: '2.1k',
+    downloads: 2100,
     minutes: 15,
   },
   {
@@ -200,7 +279,7 @@ export const RESOURCES: ResourceItem[] = [
     description: 'Lista de conectores por función y cómo usarlos sin sonar repetitivo.',
     author: 'Carlos Ruiz',
     type: 'Guía',
-    downloads: '1.7k',
+    downloads: 1700,
     minutes: 12,
   },
   {
@@ -210,7 +289,7 @@ export const RESOURCES: ResourceItem[] = [
     description: 'Ejercicios progresivos desde variables hasta un mini juego de consola.',
     author: 'Diego Paredes',
     type: 'Ejercicios',
-    downloads: '760',
+    downloads: 760,
     minutes: 45,
   },
 ];
@@ -224,7 +303,7 @@ export const POSTS: CommunityPost[] = [
     topic: 'Matemáticas',
     timeAgo: 'hace 12 min',
     content:
-      '¿Alguien tiene un truco para acordarse de cuándo usar la regla de la cadena? Siempre la confundo con la del producto en los exámenes 😅',
+      '¿Alguien tiene un truco para acordarse de cuándo usar la regla de la cadena? Siempre la confundo con la del producto en los exámenes.',
     likes: 24,
     replies: 8,
   },
@@ -266,6 +345,233 @@ export const POSTS: CommunityPost[] = [
   },
 ];
 
+export const POST_REPLIES: Record<string, CommunityReply[]> = {
+  'post-001': [
+    {
+      id: 'rep-001',
+      author: 'Diego Paredes',
+      initials: 'DP',
+      text: 'Regla de oro: si hay una función "dentro de otra", es cadena (ej. sen(3x²)). El producto aplica cuando son funciones multiplicadas, como x·e^x.',
+      timeAgo: 'hace 9 min',
+    },
+    {
+      id: 'rep-002',
+      author: 'Camila Reyes',
+      initials: 'CR',
+      text: 'A mí me sirve escribir "afuera y adentro" arriba de cada función antes de derivar. Si hay anidación, cadena; si hay multiplicación, producto.',
+      timeAgo: 'hace 6 min',
+    },
+    {
+      id: 'rep-003',
+      author: 'Mateo Salas',
+      initials: 'MS',
+      text: 'Truco: la regla de la cadena casi siempre es el último paso. Derivás la función de afuera primero y multiplicás por la derivada de adentro.',
+      timeAgo: 'hace 2 min',
+    },
+  ],
+  'post-002': [
+    {
+      id: 'rep-011',
+      author: 'Joaquín Vera',
+      initials: 'JV',
+      text: '¡Me lo compartes por favor! Justo iba a intentar algo parecido para mi proyecto de cálculo de promedios.',
+      timeAgo: 'hace 48 min',
+    },
+    {
+      id: 'rep-012',
+      author: 'Valentina Ortiz',
+      initials: 'VO',
+      text: 'Si lo subís a Recursos lo uso seguro. ¿Lo armaste con funciones o todo en un solo script?',
+      timeAgo: 'hace 30 min',
+    },
+    {
+      id: 'rep-013',
+      author: 'Mateo Salas',
+      initials: 'MS',
+      text: 'Hecho, ya quedó el gist en el grupo de Programación. Cualquier duda me escriben.',
+      timeAgo: 'hace 20 min',
+    },
+  ],
+  'post-003': [
+    {
+      id: 'rep-021',
+      author: 'Ana Martínez',
+      initials: 'AM',
+      text: 'El body doubling es real. Para exámenes de lectura a veces hacemos "sesiones silenciosas" en el club y la concentración sube muchísimo.',
+      timeAgo: 'hace 2 h',
+    },
+    {
+      id: 'rep-022',
+      author: 'Sofía Mendoza',
+      initials: 'SM',
+      text: 'Yo hago 50/10 con la técnica de los 6 sentidos: reviso qué oí, vi y sentí al terminar cada tema. Mejoró mi retención.',
+      timeAgo: 'hace 1 h',
+    },
+  ],
+  'post-004': [
+    {
+      id: 'rep-031',
+      author: 'Camila Reyes',
+      initials: 'CR',
+      text: '¡Gracias Joaquín! ¿El resumen incluye a Lorca y Alberti o solo los temas del poemario?',
+      timeAgo: 'hace 4 h',
+    },
+    {
+      id: 'rep-032',
+      author: 'Joaquín Vera',
+      initials: 'JV',
+      text: 'Incluye el contexto, los poetas principales y los temas recurrentes. Lorca y Alberti van con un apartado aparte.',
+      timeAgo: 'hace 3 h',
+    },
+  ],
+};
+
+export const NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'ntf-001',
+    icon: 'heart',
+    text: 'Camila Reyes reaccionó a tu publicación "Terminé mi primer proyecto en Python".',
+    timeAgo: 'hace 5 min',
+    unread: true,
+  },
+  {
+    id: 'ntf-002',
+    icon: 'reply',
+    text: 'Mateo Salas respondió en el grupo Cálculo I: "Exacto, ese es el truco…"',
+    timeAgo: 'hace 25 min',
+    unread: true,
+  },
+  {
+    id: 'ntf-003',
+    icon: 'calendar',
+    text: 'Tu tutoría con Laura Gómez comienza mañana a las 10:00 (Videollamada).',
+    timeAgo: 'hace 3 h',
+    unread: true,
+  },
+  {
+    id: 'ntf-004',
+    icon: 'star',
+    text: '¡Logro desbloqueado! Ratón de biblioteca: leíste 5 recursos compartidos.',
+    timeAgo: 'hace 1 día',
+    unread: false,
+  },
+  {
+    id: 'ntf-005',
+    icon: 'users',
+    text: 'Diego Paredes aceptó tu solicitud para unirte a "Proyectos en Python".',
+    timeAgo: 'hace 2 días',
+    unread: false,
+  },
+];
+
+export const ACCESS_HISTORY: AccessEntry[] = [
+  {
+    id: 'acc-001',
+    icon: 'profile',
+    text: 'Marcela Rivera vio el resumen semanal de tu progreso (Matemáticas 85%).',
+    timeAgo: 'lunes, 20:14',
+  },
+  {
+    id: 'acc-002',
+    icon: 'calendar',
+    text: 'Marcela Rivera consultó tus próximas sesiones de tutoría.',
+    timeAgo: 'lunes, 20:15',
+  },
+  {
+    id: 'acc-003',
+    icon: 'profile',
+    text: 'Iniciaste sesión, la actividad quedó registrada como privada (no compartida).',
+    timeAgo: 'hoy, 08:02',
+  },
+  {
+    id: 'acc-004',
+    icon: 'shield',
+    text: 'Se revocó el acceso temporal de un dispositivo nuevo tras detectar otra ciudad de ingreso.',
+    timeAgo: 'hace 3 días',
+  },
+  {
+    id: 'acc-005',
+    icon: 'community',
+    text: 'Marcela Rivera revisó tu participación en el grupo "Cálculo I — Repaso semanal".',
+    timeAgo: 'hace 5 días',
+  },
+];
+
+export const TUTOR_REVIEWS: Record<string, TutorReview[]> = {
+  'tut-001': [
+    {
+      id: 'rev-001',
+      author: 'Valentina Ortiz',
+      rating: 5,
+      comment:
+        'Laura explica la regla de la cadena de una forma que por fin entendí. Usa ejemplos visuales y nunca se impacienta.',
+      timeAgo: 'hace 2 semanas',
+    },
+    {
+      id: 'rev-002',
+      author: 'Mateo Salas',
+      rating: 5,
+      comment:
+        'Preparó 5 ejercicios de menor a mayor dificultad exactamente como le pedí. Se nota que arma cada clase.',
+      timeAgo: 'hace 1 mes',
+    },
+    {
+      id: 'rev-003',
+      author: 'Joaquín Vera',
+      rating: 4,
+      comment:
+        'Muy sólida para cálculo. A veces se pasa de rápida, pero si preguntas lo vuelve a explicar con gusto.',
+      timeAgo: 'hace 2 meses',
+    },
+  ],
+  'tut-002': [
+    {
+      id: 'rev-011',
+      author: 'Camila Reyes',
+      rating: 5,
+      comment:
+        'Me preparó para el TOEFL y subí de banda en el primer intento. Material y mock tests muy buenos.',
+      timeAgo: 'hace 3 semanas',
+    },
+    {
+      id: 'rev-012',
+      author: 'Andrés Luna',
+      rating: 5,
+      comment: 'Las clases de conversación son dinámicas y se enfoca en los errores que más restan puntos.',
+      timeAgo: 'hace 1 mes',
+    },
+  ],
+  'tut-003': [
+    {
+      id: 'rev-021',
+      author: 'Camila Reyes',
+      rating: 5,
+      comment:
+        'Ana comentó mi ensayo línea por línea y me dio una plantilla para el análisis de la generación del 27. Nota máxima.',
+      timeAgo: 'hace 1 semana',
+    },
+  ],
+  'tut-004': [
+    {
+      id: 'rev-031',
+      author: 'Mateo Salas',
+      rating: 5,
+      comment:
+        'Diego te enseña con proyectos reales: salimos de la primera clase con una página publicada. Cero teoría aburrida.',
+      timeAgo: 'hace 2 semanas',
+    },
+  ],
+  'tut-005': [
+    {
+      id: 'rev-041',
+      author: 'Valentina Ortiz',
+      rating: 5,
+      comment: 'Los mapas mentales de Sofía son oro puro para memorizar química orgánica.',
+      timeAgo: 'hace 3 semanas',
+    },
+  ],
+};
+
 export const TRENDING_TOPICS: string[] = [
   '#PreparaciónExámenes',
   '#HábitosDeEstudio',
@@ -277,42 +583,42 @@ export const TRENDING_TOPICS: string[] = [
 export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ach-001',
-    icon: '🔥',
+    icon: 'flame',
     title: 'Racha de estudio',
     description: '14 días seguidos conectándote.',
     unlocked: true,
   },
   {
     id: 'ach-002',
-    icon: '📖',
+    icon: 'book',
     title: 'Ratón de biblioteca',
     description: 'Leíste 5 recursos compartidos.',
     unlocked: true,
   },
   {
     id: 'ach-003',
-    icon: '👥',
+    icon: 'users',
     title: 'Trabajo en equipo',
     description: 'Te uniste a 3 grupos de estudio.',
     unlocked: true,
   },
   {
     id: 'ach-004',
-    icon: '💡',
+    icon: 'lightbulb',
     title: 'Innovador',
     description: 'Publica una guía original para desbloquear.',
     unlocked: false,
   },
   {
     id: 'ach-005',
-    icon: '🎙️',
+    icon: 'mic',
     title: 'Mentor',
     description: 'Da 5 sesiones de tutoría para desbloquear.',
     unlocked: false,
   },
   {
     id: 'ach-006',
-    icon: '🏅',
+    icon: 'award',
     title: 'Maratón',
     description: 'Completa 20 h de estudio en un mes.',
     unlocked: false,
@@ -320,10 +626,10 @@ export const ACHIEVEMENTS: Achievement[] = [
 ];
 
 export const REWARDS: RewardEntry[] = [
-  { id: 'rw-001', icon: '🏆', label: 'Mejor aporte de la semana', points: '+150 Rep' },
-  { id: 'rw-002', icon: '✅', label: 'Semana perfecta', points: '+300 XP' },
-  { id: 'rw-003', icon: '🤝', label: 'Compañero servicial', points: '+50 Rep' },
-  { id: 'rw-004', icon: '📚', label: 'Recurso más descargado', points: '+120 Rep' },
+  { id: 'rw-001', icon: 'trophy', label: 'Mejor aporte de la semana', points: '+150 Rep' },
+  { id: 'rw-002', icon: 'check', label: 'Semana perfecta', points: '+300 XP' },
+  { id: 'rw-003', icon: 'users', label: 'Compañero servicial', points: '+50 Rep' },
+  { id: 'rw-004', icon: 'book', label: 'Recurso más descargado', points: '+120 Rep' },
 ];
 
 export const CONVERSATIONS: Conversation[] = [
@@ -347,7 +653,7 @@ export const CONVERSATIONS: Conversation[] = [
     id: 'conv-003',
     name: 'Ana Martínez',
     initials: 'AM',
-    preview: 'Te dejé comentarios en tu ensayo 👌',
+    preview: 'Te dejé comentarios en tu ensayo',
     timeAgo: 'Lun',
     unread: 0,
   },
@@ -435,7 +741,7 @@ export const MESSAGES_BY_CONVERSATION: Record<string, ChatMessage[]> = {
       id: 'msg-201',
       author: 'Ana Martínez',
       authorInitials: 'AM',
-      text: 'Hola! Te dejé comentarios en tu ensayo sobre la generación del 27 👌',
+      text: 'Hola! Te dejé comentarios en tu ensayo sobre la generación del 27',
       time: 'Lun 09:12',
       mine: false,
     },
@@ -447,16 +753,88 @@ export const MESSAGES_BY_CONVERSATION: Record<string, ChatMessage[]> = {
       time: 'Lun 09:30',
       mine: true,
     },
-    {
+{
       id: 'msg-203',
       author: 'Ana Martínez',
       authorInitials: 'AM',
-      text: 'Perfecto, sin apuro. La estructura ya está muy bien encaminada.',
+      text: 'Perfecto, sin apuro. La estructura ya está muy encaminada.',
       time: 'Lun 09:33',
       mine: false,
     },
   ],
 };
+
+/**
+ * Hilo de chat por defecto para un grupo de estudio sin conversación propia
+ * en el mock. Se genera a partir del nombre del grupo para que "Abrir chat
+ * del grupo" siempre tenga algo que mostrar.
+ */
+export function groupChatFor(group: StudyGroup): ChatMessage[] {
+  const i = (group.id.length || 0) % 3;
+  const members: Array<{ name: string; initials: string }> = [
+    { name: 'Mateo Salas', initials: 'MS' },
+    { name: 'Valentina Ortiz', initials: 'VO' },
+    { name: 'Joaquín Vera', initials: 'JV' },
+  ];
+  const lead = members[i];
+  const second = members[(i + 1) % members.length];
+  return [
+    {
+      id: `grp-msg-${group.id}-1`,
+      author: lead.name,
+      authorInitials: lead.initials,
+      text: `¡Bienvenidos al grupo "${group.name}"! ${group.meetingSchedule === 'Por definir' ? 'Vamos a coordinar el primer encuentro esta semana.' : 'El primer encuentro está planificado: ' + group.meetingSchedule + '.'}`,
+      time: 'hoy 09:10',
+      mine: false,
+    },
+    {
+      id: `grp-msg-${group.id}-2`,
+      author: `${second.name}`,
+      authorInitials: second.initials,
+      text: 'Buena idea. ¿Compartimos un recurso inicial para ponernos al día antes de la reunión?',
+      time: 'hoy 09:24',
+      mine: false,
+    },
+    {
+      id: `grp-msg-${group.id}-3`,
+      author: '__me__',
+      authorInitials: '__me__',
+      text: 'Perfecto, yo también estaré. Ahí llego con mis apuntes.',
+      time: 'hoy 09:31',
+      mine: true,
+    },
+  ];
+}
+
+/** Hilo por defecto al contactar a un tutor desde su perfil. */
+export function tutorChatFor(tutor: Tutor): ChatMessage[] {
+  return [
+    {
+      id: `ttr-msg-${tutor.id}-1`,
+      author: tutor.name,
+      authorInitials: tutor.initials,
+      text: `¡Hola! Soy ${tutor.name.split(' ')[0]}. Vi que me escribiste por ${tutor.subjects.join(' y ')}. ¿Qué tema quieres reforzar?`,
+      time: 'hoy 11:05',
+      mine: false,
+    },
+    {
+      id: `ttr-msg-${tutor.id}-2`,
+      author: '__me__',
+      authorInitials: '__me__',
+      text: `Hola, sí. Estoy preparando ${tutor.subjects[0] ?? 'la materia'} y quería coordinar una sesión antes del examen.`,
+      time: 'hoy 11:12',
+      mine: true,
+    },
+    {
+      id: `ttr-msg-${tutor.id}-3`,
+      author: tutor.name,
+      authorInitials: tutor.initials,
+      text: `${tutor.responseTime}. Puedes reservar un horario desde mi perfil y dejarme una nota con lo que quieres ver.`,
+      time: 'hoy 11:20',
+      mine: false,
+    },
+  ];
+}
 
 export const SUBJECT_PROGRESS: SubjectProgress[] = [
   { subject: 'Matemáticas', percent: 85 },

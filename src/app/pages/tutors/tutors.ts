@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CatalogService, TutorFilters } from '../../core/catalog.service';
-import { ToastService } from '../../core/toast.service';
 import { Tutor } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
@@ -14,11 +13,15 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle';
 })
 export class TutorsPage {
   private readonly catalog = inject(CatalogService);
-  private readonly toast = inject(ToastService);
 
   readonly subjects = this.catalog.getSubjects();
   readonly tutors = signal<Tutor[]>([]);
   readonly loading = signal(true);
+
+  readonly perPage = 3;
+  readonly visibleCount = signal(this.perPage);
+  readonly visibleTutors = computed(() => this.tutors().slice(0, this.visibleCount()));
+  readonly remaining = computed(() => Math.max(0, this.tutors().length - this.visibleCount()));
 
   query = '';
   subject = '';
@@ -39,8 +42,13 @@ export class TutorsPage {
     };
     this.catalog.getTutors(filters).subscribe((list) => {
       this.tutors.set(list);
+      this.visibleCount.set(this.perPage);
       this.loading.set(false);
     });
+  }
+
+  loadMore(): void {
+    this.visibleCount.update((count) => count + this.perPage);
   }
 
   clearFilters(): void {
@@ -49,9 +57,5 @@ export class TutorsPage {
     this.maxPrice = null;
     this.minRating = null;
     this.search();
-  }
-
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
   }
 }

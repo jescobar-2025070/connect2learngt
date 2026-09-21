@@ -6,10 +6,34 @@ import { ToastService } from '../../core/toast.service';
 import { Achievement, RewardEntry } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+import { ModalComponent } from '../../shared/modal';
+
+interface TrackedStep {
+  text: string;
+  status: 'done' | 'current' | 'todo';
+}
+
+const UNLOCK_STEPS: Record<string, TrackedStep[]> = {
+  'ach-004': [
+    { text: 'Publica una guía original en Recursos', status: 'current' },
+    { text: 'Recibe 10 descargas o me gusta en comunidad', status: 'todo' },
+    { text: 'Recibe un reconocimiento de la comunidad', status: 'todo' },
+  ],
+  'ach-005': [
+    { text: 'Completa tu perfil de tutor', status: 'done' },
+    { text: 'Imparte tus primeras 3 sesiones', status: 'current' },
+    { text: 'Consigue 5 reseñas de 5 estrellas', status: 'todo' },
+  ],
+  'ach-006': [
+    { text: 'Suma 10 horas de estudio este mes', status: 'done' },
+    { text: 'Llega a 15 horas de estudio', status: 'current' },
+    { text: 'Completa 20 horas en un mes', status: 'todo' },
+  ],
+};
 
 @Component({
   selector: 'app-reputation',
-  imports: [RouterLink, DecimalPipe, IconComponent, ThemeToggleComponent],
+  imports: [RouterLink, DecimalPipe, IconComponent, ThemeToggleComponent, ModalComponent],
   templateUrl: './reputation.html',
 })
 export class ReputationPage {
@@ -19,6 +43,9 @@ export class ReputationPage {
   readonly achievements = signal<Achievement[]>([]);
   readonly rewards = signal<RewardEntry[]>([]);
   readonly loading = signal(true);
+
+  // Seguimiento de un logro bloqueado
+  readonly tracking = signal<Achievement | null>(null);
 
   readonly repScore = 4850;
   readonly level = 12;
@@ -45,7 +72,20 @@ export class ReputationPage {
     });
   }
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  stepsOf(ach: Achievement): TrackedStep[] {
+    return UNLOCK_STEPS[ach.id] ?? [
+      { text: 'Participa activamente en la plataforma', status: 'current' },
+      { text: 'Acumula experiencia y reputación', status: 'todo' },
+    ];
+  }
+
+  progressOf(ach: Achievement): number {
+    const steps = this.stepsOf(ach);
+    const done = steps.filter((s) => s.status === 'done').length;
+    return Math.round((done / steps.length) * 100);
+  }
+
+  openTracking(ach: Achievement): void {
+    this.tracking.set(ach);
   }
 }

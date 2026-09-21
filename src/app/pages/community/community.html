@@ -77,10 +77,17 @@
           </div>
         }
       </div>
-    } @else if (posts().length === 0) {
-      <div class="empty">Aún no hay publicaciones. ¡Sé el primero en escribir algo!</div>
+    } @else if (visiblePosts().length === 0) {
+      <div class="empty">
+        @if (filter() === 'mine') {
+          <p><strong>Aún no tienes publicaciones.</strong></p>
+          <p class="mini">Todo lo que escribas aparecerá aquí. ¡Anímate a publicar algo arriba!</p>
+        } @else {
+          <p>Aún no hay publicaciones. ¡Sé el primero en escribir algo!</p>
+        }
+      </div>
     } @else {
-      @for (post of posts(); track post.id) {
+      @for (post of visiblePosts(); track post.id) {
         <article class="card post-card">
           <div class="post-head">
             <span class="avatar" aria-hidden="true">{{ post.initials }}</span>
@@ -106,12 +113,61 @@
             <button
               type="button"
               class="post-action"
-              (click)="comingSoon('Responder a esta publicación')"
+              [attr.aria-expanded]="isOpen(post)"
+              (click)="toggleReplies(post)"
             >
               <app-icon name="reply" [size]="17" />
               {{ post.replies }} respuestas
             </button>
           </div>
+
+          @if (isOpen(post)) {
+            <div class="replies">
+              @if (loadingReplies() === post.id) {
+                <div class="skeleton line"></div>
+                <div class="skeleton line medium"></div>
+              } @else if (repliesOf(post).length === 0) {
+                <p class="muted mini mt-0">Aún no hay respuestas. Sé el primero en responder.</p>
+              } @else {
+                @for (reply of repliesOf(post); track reply.id) {
+                  <div class="reply">
+                    <div class="reply-head">
+                      <span class="avatar sm" aria-hidden="true">{{ reply.initials }}</span>
+                      <strong class="mini">{{ reply.author }}</strong>
+                      <span class="mini muted">· {{ reply.timeAgo }}</span>
+                    </div>
+                    <p class="mini mt-0" style="margin-left: 38px">{{ reply.text }}</p>
+                  </div>
+                }
+              }
+
+              <form class="reply-compose" (ngSubmit)="sendReply(post)">
+                <span class="avatar sm" aria-hidden="true">
+                  {{ student()?.initials ?? 'TU' }}
+                </span>
+                <label class="sr-only" [for]="'reply-' + post.id">Escribe una respuesta</label>
+                <input
+                  [id]="'reply-' + post.id"
+                  name="replyText"
+                  class="input"
+                  placeholder="Escribe una respuesta…"
+                  [(ngModel)]="replyDrafts[post.id]"
+                />
+                <button
+                  type="submit"
+                  class="btn"
+                  [disabled]="!replyDrafts[post.id]?.trim() || replyingPostId() === post.id"
+                  aria-label="Publicar respuesta"
+                >
+                  @if (replyingPostId() === post.id) {
+                    <span class="spinner sm on-brand" aria-hidden="true"></span>
+                  } @else {
+                    <app-icon name="send" [size]="17" />
+                  }
+                </button>
+              </form>
+            </div>
+          }
         </article>
       }
     }
@@ -119,7 +175,10 @@
 
   <aside class="c4">
     <div class="card">
-      <h2>🔥 Temas en tendencia</h2>
+      <h2 class="section-ico-head">
+        <app-icon name="flame" [size]="18" aria-hidden="true" />
+        Temas en tendencia
+      </h2>
       <div class="chips-inline">
         @for (topic of trending; track topic) {
           <span class="pill">{{ topic }}</span>
@@ -127,7 +186,10 @@
       </div>
     </div>
     <div class="card" style="margin-top: 18px">
-      <h2>💡 Consejo</h2>
+      <h2 class="section-ico-head">
+        <app-icon name="lightbulb" [size]="18" aria-hidden="true" />
+        Consejo
+      </h2>
       <p class="muted mini mt-0">
         Haz preguntas claras y específicas — recibirás mejores respuestas más rápido. Respeta
         siempre a los demás estudiantes.

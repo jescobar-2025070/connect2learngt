@@ -64,7 +64,8 @@ export class GroupDetailPage {
     });
   }
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  /** Abre el chat del grupo en Mensajes (hilo simulado por defecto). */
+  openChat(groupId: string): void {
+    this.router.navigate(['/app/mensajes'], { queryParams: { grupo: groupId } });
   }
 }

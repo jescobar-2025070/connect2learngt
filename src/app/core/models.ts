@@ -55,7 +55,7 @@ export interface ResourceItem {
   description: string;
   author: string;
   type: 'PDF' | 'Video' | 'Guía' | 'Ejercicios';
-  downloads: string;
+  downloads: number;
   minutes: number;
 }
 
@@ -69,6 +69,37 @@ export interface CommunityPost {
   content: string;
   likes: number;
   replies: number;
+}
+
+export interface CommunityReply {
+  id: string;
+  author: string;
+  initials: string;
+  text: string;
+  timeAgo: string;
+}
+
+export interface AppNotification {
+  id: string;
+  icon: string;
+  text: string;
+  timeAgo: string;
+  unread: boolean;
+}
+
+export interface AccessEntry {
+  id: string;
+  icon: string;
+  text: string;
+  timeAgo: string;
+}
+
+export interface TutorReview {
+  id: string;
+  author: string;
+  rating: number;
+  comment: string;
+  timeAgo: string;
 }
 
 export interface Achievement {

@@ -4,11 +4,9 @@ import { authGuard, onboardingGuard } from './core/auth.guard';
 /**
  * Camino feliz (navegable de punta a punta):
  *   login → intereses → inicio → tutores → perfil del tutor → reserva → confirmación
- * El resto de pantallas está completa y funcional (no solo visual): grupos
- * de estudio y supervisión familiar incluyen sus propias acciones (unirse,
- * crear, invitar, revocar). Solo quedan como aviso de "próximamente" las
- * acciones realmente fuera de alcance para esta ronda (videollamada, subir
- * archivos, edición de perfil, etc.).
+ * El resto de pantallas está completa y funcional (no solo visual): todas las
+ * acciones de segundo nivel (chat de grupo/tutor, videollamada, subir
+ * recursos, editar perfil, etc.) están implementadas y simuladas.
  */
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },

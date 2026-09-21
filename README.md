@@ -36,12 +36,40 @@ npm run build
    La reserva queda reflejada en el panel de Inicio al volver.
 4. El resto de secciones (Comunidad, Recursos, Grupos de estudio, Mensajes,
    Reputación, Supervisión familiar, Perfil) están completamente
-   navegables, muestran datos reales y sus acciones principales funcionan
-   de verdad (unirte a un grupo, crear uno, invitar a un familiar,
-   responder un mensaje...). Solo algunos botones puntuales de segundo
-   nivel (subir un archivo, videollamada, editar el perfil, chat propio de
-   un grupo) muestran un aviso "Próximamente disponible", por quedar fuera
-   del alcance de esta ronda de pitch.
+   navegables, muestran datos reales y sus acciones funcionan: unirte a un
+   grupo, crear uno, invitar a un familiar, responder un mensaje, publicar
+   y responder en la comunidad, subir y "descargar" recursos, ver el
+   historial de accesos, el seguimiento de logros, la videollamada
+   simulada, el registro con Google y la edición del perfil.
+   Todas estas funciones son **simuladas** (sin backend), igual que el
+   resto del flujo.
+
+## Funciones simuladas añadidas en esta iteración
+
+Para el pitch se completaron las acciones que antes mostraban
+"Próximamente disponible", todas **simuladas** con latencia y estado en
+memoria:
+
+- **Comunidad:** hilo de respuestas por publicación (expandir, responder,
+  contador en vivo) y filtro "Mis publicaciones" real.
+- **Inicio:** búsqueda global (tutores, recursos, grupos, publicaciones),
+  centro de notificaciones y marcado como leídas, "Unirme a la sala"
+  (videollamada simulada) y descarga de materiales de la sesión.
+- **Mensajes:** videollamada simulada por conversación y enlaces directos al
+  chat del grupo o del tutor (desde la ficha del grupo, del tutor o del
+  panel de inicio).
+- **Recursos:** subir un recurso (se añade a la biblioteca) y descarga
+  simulada que incrementa el contador.
+- **Tutores:** "Cargar más resultados" con paginación y reseñas completas en
+  un modal; el chat con el tutor abre Mensajes con ese hilo.
+- **Reputación:** modal "Cómo desbloquear este logro" con checklist y barra
+  de progreso.
+- **Supervisión familiar:** historial de accesos en modal.
+- **Reserva:** añadir la sesión al calendario (simulado).
+- **Cuenta:** login y registro de Google simulados y recuperación de
+  contraseña simulada desde el login.
+- **Perfil:** editar información (persiste vía `sessionStorage`), cambiar
+  contraseña y privacidad con modales.
 
 ## Qué es real y qué es simulado
 
@@ -57,7 +85,10 @@ npm run build
 - **Simulado:** no hay backend, base de datos ni autenticación real. Los
   "servicios" (`src/app/core/*.service.ts`) devuelven arreglos de datos
   fijos definidos en `mock-data.ts`, envueltos en observables con retardo.
-  Cerrar la pestaña reinicia el estado.
+  Cerrar la pestaña reinicia el estado. La videollamada muestra un avatar
+  estático con contador de tiempo; el calendario, los uploads, las
+  descargas, la conexión con Google y la recuperación de contraseña son
+  flujos con confirmaciones simuladas.
 
 ## Nombres dinámicos según el correo de acceso
 
@@ -100,8 +131,7 @@ src/styles.css     Sistema de diseño: tokens de color (claro/oscuro), tipograf�
 
 ## Pendiente fuera de este prototipo
 
-Dentro de Grupos de estudio y Supervisión familiar, algunas acciones de
-segundo nivel (chat propio del grupo, videollamada, historial de accesos)
-siguen mostrando "Próximamente disponible": la pantalla principal de cada
-sección es completamente funcional, pero esas acciones puntuales quedan
-fuera del alcance de esta ronda de pitch.
+Todas las funciones visibles están simuladas y operativas. Queda fuera del
+alcance únicamente la integración con backends reales: autenticación OAuth de
+Google, pagos, WebRTC/streaming de video, almacenamiento de archivos y
+notificaciones push.

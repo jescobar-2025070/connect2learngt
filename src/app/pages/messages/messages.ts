@@ -1,21 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { ChatMessage, Conversation } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+import { VideoCallComponent } from '../../shared/video-call';
 
 @Component({
   selector: 'app-messages',
-  imports: [FormsModule, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, IconComponent, ThemeToggleComponent, VideoCallComponent],
   templateUrl: './messages.html',
 })
 export class MessagesPage {
   private readonly catalog = inject(CatalogService);
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly conversations = signal<Conversation[]>([]);
   readonly messages = signal<ChatMessage[]>([]);
@@ -24,12 +27,42 @@ export class MessagesPage {
   readonly sending = signal(false);
   draft = '';
 
+  // Hilos generados al llegar por enlace (chat de grupo o de tutor).
+  private externalThreads = new Map<string, ChatMessage[]>();
+
+  // Videollamada
+  readonly callOpen = signal(false);
+  readonly callTarget = signal<{ name: string; initials: string } | null>(null);
+
   constructor() {
     this.catalog.getConversations().subscribe((list) => {
-      this.conversations.set(list);
-      this.activeId.set(list[0]?.id ?? null);
-      this.loadMessages();
+      this.conversations.set(list.map((c) => ({ ...c })));
+      const params = this.route.snapshot.queryParamMap;
+      const tutorId = params.get('tutor');
+      const groupId = params.get('grupo');
+
+      if (tutorId) {
+        this.catalog.getTutorConversation(tutorId).subscribe(({ conversation, messages }) => {
+          this.embedExternal(conversation, messages);
+        });
+      } else if (groupId) {
+        this.catalog.getGroupConversation(groupId).subscribe(({ conversation, messages }) => {
+          this.embedExternal(conversation, messages);
+        });
+      } else {
+        this.activeId.set(list[0]?.id ?? null);
+        this.loadMessages();
+      }
     });
+  }
+
+  private embedExternal(conversation: Conversation, thread: ChatMessage[]): void {
+    this.externalThreads.set(conversation.id, thread.map((m) => ({ ...m })));
+    if (!this.conversations().some((c) => c.id === conversation.id)) {
+      this.conversations.update((list) => [...list, conversation]);
+    }
+    this.activeId.set(conversation.id);
+    this.loadMessages();
   }
 
   get activeConversation(): Conversation | null {
@@ -59,6 +92,21 @@ export class MessagesPage {
   private loadMessages(): void {
     const id = this.activeId();
     if (!id) return;
+
+    const external = this.externalThreads.get(id);
+    if (external) {
+      this.loading.set(true);
+      setTimeout(() => {
+        this.messages.set(
+          external.map((m) =>
+            m.mine ? { ...m, author: this.myName, authorInitials: this.myInitials } : m,
+          ),
+        );
+        this.loading.set(false);
+      }, 600);
+      return;
+    }
+
     this.loading.set(true);
     this.catalog.getMessages(id).subscribe((list) => {
       // Los mensajes propios llegan marcados con el sentinela "__me__";
@@ -90,12 +138,22 @@ export class MessagesPage {
 
     this.catalog.sendMessage(message).subscribe((sent) => {
       this.messages.update((list) => [...list, sent]);
+      // Si el hilo es generado (grupo/tutor), guarda el envío para el re-render.
+      const thread = this.externalThreads.get(conversationId);
+      if (thread) this.externalThreads.set(conversationId, [...thread, sent]);
       this.draft = '';
       this.sending.set(false);
     });
   }
 
-  comingSoon(feature: string): void {
-    this.toast.comingSoon(feature);
+  openCall(): void {
+    const conv = this.activeConversation;
+    if (!conv) return;
+    this.callTarget.set({ name: conv.name, initials: conv.initials });
+    this.callOpen.set(true);
+  }
+
+  closeCall(): void {
+    this.callOpen.set(false);
   }
 }

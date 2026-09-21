@@ -54,13 +54,16 @@
       </div>
 
       <div class="actions" style="margin-top: 22px">
-        <button type="button" class="btn subtle" (click)="comingSoon('Editar información personal')">
+        <button type="button" class="btn subtle" (click)="openEdit()">
+          <app-icon name="profile" [size]="17" />
           Editar información
         </button>
-        <button type="button" class="btn subtle" (click)="comingSoon('Cambiar la contraseña')">
+        <button type="button" class="btn subtle" (click)="openPassword()">
+          <app-icon name="shield" [size]="17" />
           Cambiar contraseña
         </button>
-        <button type="button" class="btn subtle" (click)="comingSoon('La configuración de privacidad')">
+        <button type="button" class="btn subtle" (click)="showPrivacy.set(true)">
+          <app-icon name="eye" [size]="17" />
           Privacidad
         </button>
       </div>
@@ -85,4 +88,140 @@
       </a>
     </section>
   </div>
+}
+
+@if (showEdit()) {
+  <app-modal [open]="true" title="Editar información personal" (close)="showEdit.set(false)">
+    <div class="field">
+      <label for="editName">Nombre completo</label>
+      <input
+        id="editName"
+        name="editName"
+        class="input"
+        [(ngModel)]="editName"
+        autocomplete="name"
+      />
+    </div>
+    <div class="grid two-col">
+      <div class="field">
+        <label for="editAge">Edad</label>
+        <input
+          id="editAge"
+          name="editAge"
+          type="number"
+          min="15"
+          max="25"
+          class="input"
+          [(ngModel)]="editAge"
+        />
+      </div>
+      <div class="field">
+        <label for="editGrade">Grado / curso</label>
+        <input id="editGrade" name="editGrade" class="input" [(ngModel)]="editGrade" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="editInstitution">Institución</label>
+      <input
+        id="editInstitution"
+        name="editInstitution"
+        class="input"
+        [(ngModel)]="editInstitution"
+      />
+    </div>
+    <div class="actions" style="justify-content: flex-end">
+      <button type="button" class="btn ghost" (click)="showEdit.set(false)">Cancelar</button>
+      <button type="button" class="btn" [disabled]="savingEdit()" (click)="saveEdit()">
+        @if (savingEdit()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Guardando…</span>
+        } @else {
+          <span>Guardar cambios</span>
+        }
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (showPassword()) {
+  <app-modal [open]="true" title="Cambiar contraseña" (close)="showPassword.set(false)">
+    <p class="muted mini" style="margin-top: 0">
+      Simulamos el flujo real: valida la contraseña actual y guarda la nueva.
+    </p>
+    <div class="field">
+      <label for="currentPw">Contraseña actual</label>
+      <input
+        id="currentPw"
+        name="currentPw"
+        type="password"
+        class="input"
+        autocomplete="current-password"
+        [(ngModel)]="currentPassword"
+      />
+    </div>
+    <div class="field">
+      <label for="newPw">Nueva contraseña</label>
+      <input
+        id="newPw"
+        name="newPw"
+        type="password"
+        class="input"
+        autocomplete="new-password"
+        [(ngModel)]="newPassword"
+      />
+    </div>
+    <div class="field">
+      <label for="confirmPw">Confirmar nueva contraseña</label>
+      <input
+        id="confirmPw"
+        name="confirmPw"
+        type="password"
+        class="input"
+        autocomplete="new-password"
+        [(ngModel)]="confirmPassword"
+      />
+    </div>
+    @if (passwordError()) {
+      <p class="notice warning" role="alert">{{ passwordError() }}</p>
+    }
+    <div class="actions" style="justify-content: flex-end">
+      <button type="button" class="btn ghost" (click)="showPassword.set(false)">Cancelar</button>
+      <button type="button" class="btn" [disabled]="savingPassword()" (click)="savePassword()">
+        @if (savingPassword()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Guardando…</span>
+        } @else {
+          <span>Actualizar contraseña</span>
+        }
+      </button>
+    </div>
+  </app-modal>
+}
+
+@if (showPrivacy()) {
+  <app-modal [open]="true" title="Configuración de privacidad" (close)="showPrivacy.set(false)">
+    <p class="muted mini" style="margin-top: 0">
+      Controla quién puede ver tus datos y tu actividad en la comunidad.
+    </p>
+    @for (p of privacyOptions(); track p.id) {
+      <div class="pref-row">
+        <div class="pref-text">
+          <strong>{{ p.label }}</strong>
+          <p class="mini muted mt-0">{{ p.description }}</p>
+        </div>
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          [attr.aria-checked]="p.enabled"
+          [attr.aria-label]="p.label"
+          [class.on]="p.enabled"
+          [disabled]="savingPrivacyId() === p.id"
+          (click)="togglePrivacy(p)"
+        >
+          <span class="switch-thumb"></span>
+        </button>
+      </div>
+    }
+  </app-modal>
 }

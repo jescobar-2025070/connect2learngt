@@ -139,10 +139,39 @@
         type="button"
         class="btn ghost block"
         style="margin-top: 16px"
-        (click)="comingSoon('El historial de accesos')"
+        (click)="openHistory()"
       >
+        <app-icon name="eye" [size]="17" />
         Ver historial de accesos
       </button>
     </section>
   </div>
+}
+
+@if (showHistory()) {
+  <app-modal [open]="true" title="Historial de accesos" (close)="showHistory.set(false)">
+    <p class="muted mini" style="margin-top: 0">
+      Actividad reciente de los accesos a tu cuenta.
+    </p>
+    @if (historyLoading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando historial…</span>
+        <div class="skeleton line"></div>
+        <div class="skeleton line medium"></div>
+        <div class="skeleton line short"></div>
+      </div>
+    } @else {
+      <div class="history-list">
+        @for (h of history(); track h.id) {
+          <div class="history-item">
+            <span class="ntf-icon" aria-hidden="true"><app-icon [name]="h.icon" [size]="17" /></span>
+            <div style="flex: 1; min-width: 0">
+              <span>{{ h.text }}</span>
+              <span class="mini muted" style="display: block">{{ h.timeAgo }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </app-modal>
 }
