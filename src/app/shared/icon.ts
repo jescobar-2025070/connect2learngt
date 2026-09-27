@@ -42,6 +42,7 @@ const PATHS: Record<string, string> = {
   // Errores y 404: triángulo de aviso y brújula ("no estás aquí").
   alert: 'M12 4.3 3 19.4a1 1 0 0 0 .86 1.5h16.28a1 1 0 0 0 .86-1.5L12 4.3ZM12 9.8v4.1m0 2.9v.2',
   compass: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm3.4-12.4-1.9 5.5-5.5 1.9 1.9-5.5 5.5-1.9Z',
+  copy: 'M9 9V5.5A1.5 1.5 0 0 1 10.5 4h9A1.5 1.5 0 0 1 21 5.5v9a1.5 1.5 0 0 1-1.5 1.5H16M5.5 8h9A1.5 1.5 0 0 1 16 9.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 18.5v-9A1.5 1.5 0 0 1 5.5 8Z',
 };
 
 @Component({

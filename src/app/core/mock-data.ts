@@ -2,7 +2,9 @@ import {
   AccessEntry,
   Achievement,
   AppNotification,
+  Booking,
   ChatMessage,
+  ChildAccount,
   CommunityPost,
   CommunityReply,
   Conversation,
@@ -48,6 +50,12 @@ export const DEMO_STUDENT: UserProfile = {
   grade: '5to Bachillerato',
   interests: [],
   initials: 'AR',
+  /**
+   * Código que comparte con su familia. Lo genera la cuenta al registrarse y
+   * se muestra en su Perfil; el padre lo escribe para vincularse (ver
+   * `CHILDREN[0].linkedCode`, que es el mismo valor en la demo).
+   */
+  childCode: 'C2L-4F7K-2Q',
 };
 
 /** Perfil base de la demo docente: mismas reglas, datos de maestro/tutor. */
@@ -986,5 +994,73 @@ export const SHARING_PREFERENCES: SharingPreference[] = [
     label: 'Actividad en la comunidad',
     description: 'Publicaciones y participación en grupos de estudio.',
     enabled: false,
+  },
+];
+
+/* ------------------------------------------------------------------
+   Rol padre: el hijo al que administra
+   ------------------------------------------------------------------ */
+
+/**
+ * Hijo vinculado a la cuenta del padre de la demo.
+ *
+ * Es el mismo estudiante que se puede iniciar sesión en la demo
+ * (`DEMO_STUDENT`), no un personaje aparte: el código que el hijo ve en su
+ * perfil es el mismo que el padre teclea al vincularse, y ambos extremos de la
+ * vinculación existen en la demo.
+ *
+ * `linkedCode` es la clave con la que se resuelve el vínculo (ver
+ * `DEMO_PARENT.childCode`). Antes ese campo era decorativo: se pedía en el
+ * registro y no se comprobaba contra nada. Ahora un código equivocado no
+ * vincula a nadie.
+ */
+export const CHILDREN: ChildAccount[] = [
+  {
+    id: 'child-001',
+    name: DEMO_STUDENT.name,
+    initials: DEMO_STUDENT.initials,
+    age: DEMO_STUDENT.age,
+    grade: DEMO_STUDENT.grade,
+    institution: DEMO_STUDENT.institution,
+    interests: DEMO_STUDENT.interests.length ? DEMO_STUDENT.interests : ['Matemáticas', 'Física', 'Inglés'],
+    linkedCode: 'C2L-4F7K-2Q',
+    weeklyGoalPercent: 75,
+    hoursThisWeek: 6.5,
+    studyStreak: 14,
+    subjectProgress: SUBJECT_PROGRESS.map((p) => ({ ...p })),
+    tutorIds: ['tut-001', 'tut-002'],
+  },
+];
+
+/**
+ * Sesiones que el hijo ya tiene agendadas. El padre las ve en modo lectura:
+ * puede añadir otra, pero no editar ni cancelar las que agendó su hijo.
+ */
+export const CHILD_SESSIONS: Booking[] = [
+  {
+    id: 'bk-child-001',
+    tutorName: 'Laura Gómez',
+    tutorInitials: 'LG',
+    subject: 'Matemáticas',
+    date: 'jueves, 23 de abril',
+    time: '17:00',
+    modality: 'Videollamada',
+    goal: 'Repasar integral por partes antes del parcial',
+    forName: DEMO_STUDENT.name,
+    forChildId: 'child-001',
+    bookedByRole: 'estudiante',
+  },
+  {
+    id: 'bk-child-002',
+    tutorName: 'Carlos Ruiz',
+    tutorInitials: 'CR',
+    subject: 'Inglés',
+    date: 'sábado, 26 de abril',
+    time: '10:30',
+    modality: 'Presencial',
+    goal: 'Práctica de writing para el examen de Cambridge',
+    forName: DEMO_STUDENT.name,
+    forChildId: 'child-001',
+    bookedByRole: 'padre',
   },
 ];

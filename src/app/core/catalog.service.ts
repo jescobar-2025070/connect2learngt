@@ -4,6 +4,8 @@ import { SessionService } from './session.service';
 import {
   ACCESS_HISTORY,
   ACHIEVEMENTS,
+  CHILDREN,
+  CHILD_SESSIONS,
   CONVERSATIONS,
   GROUP_MEMBERS,
   GUARDIANS,
@@ -27,7 +29,9 @@ import {
   Achievement,
   AccessEntry,
   AppNotification,
+  Booking,
   ChatMessage,
+  ChildAccount,
   CommunityPost,
   CommunityReply,
   Conversation,
@@ -436,5 +440,66 @@ export class CatalogService {
         return pref;
       }),
     );
+  }
+
+  // ---------------------------------------------------------------
+  // Rol padre: el hijo al que administra
+  // ---------------------------------------------------------------
+
+  /**
+   * Hijos vinculados a la cuenta activa.
+   *
+   * No se busca por correo ni por nombre: se resuelve con el código de
+   * vinculación que el padre escribió (en el registro o en esta misma
+   * pantalla). Por eso un padre nuevo ve "sin hijo vinculado" en vez de los
+   * datos de un menor cualquiera.
+   */
+  getLinkedChildren(): Observable<ChildAccount[]> {
+    return this.mock(
+      CHILDREN.filter((c) => c.linkedCode === this.session.childCode()).map((c) => ({ ...c })),
+    );
+  }
+
+  /**
+   * Valida un código y, si corresponde a un menor, lo guarda en la sesión.
+   * Un código que no existe devuelve `null`: la pantalla muestra el error en
+   * línea en vez de crear un vínculo falso.
+   */
+  linkChildByCode(code: string): Observable<ChildAccount | null> {
+    const normalized = code.trim().toUpperCase();
+    return of(null).pipe(
+      delay(1200),
+      map(() => {
+        const child = CHILDREN.find((c) => c.linkedCode === normalized);
+        if (child) this.session.setChildCode(normalized);
+        return child ? { ...child } : null;
+      }),
+    );
+  }
+
+  /** Corta el vínculo: el padre deja de ver los datos del hijo. */
+  unlinkChild(): Observable<void> {
+    return of(void 0).pipe(
+      delay(700),
+      map(() => {
+        this.session.setChildCode(null);
+      }),
+    );
+  }
+
+  /**
+   * Sesiones que el hijo ya tenía agendadas (datos de su cuenta, no de la del
+   * padre). Las que el padre agende durante la sesión se leen de
+   * `SessionService.childBookings` y el panel las muestra junto a estas.
+   */
+  getChildSessions(childId: string): Observable<Booking[]> {
+    return this.mock(
+      CHILD_SESSIONS.filter((b) => b.forChildId === childId).map((b) => ({ ...b })),
+    );
+  }
+
+  /** Tutores con los que el hijo tiene sesiones, resueltos desde sus ids. */
+  getChildTutors(child: ChildAccount): Tutor[] {
+    return TUTORS.filter((t) => child.tutorIds.includes(t.id)).map((t) => ({ ...t }));
   }
 }

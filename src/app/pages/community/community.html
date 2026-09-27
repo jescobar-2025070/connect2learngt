@@ -1,19 +1,28 @@
 <div class="topbar">
   <div class="page-head">
     <h1>Learning Hub</h1>
-    <p class="muted mt-0">Comparte preguntas, ideas y recursos con otros estudiantes.</p>
+    <p class="muted mt-0">
+    @if (readOnly()) {
+      Consulta lo que comparten otros estudiantes. Solo puedes leer.
+    } @else {
+      Comparte preguntas, ideas y recursos con otros estudiantes.
+    }
+  </p>
   </div>
   <div class="top-actions">
-    <a class="btn ghost" routerLink="/app/grupos">
-      <app-icon name="users" [size]="17" />
-      Ver grupos de estudio
-    </a>
+    @if (!readOnly()) {
+      <a class="btn ghost" routerLink="/app/grupos">
+        <app-icon name="users" [size]="17" />
+        Ver grupos de estudio
+      </a>
+    }
     <app-theme-toggle />
   </div>
 </div>
 
 <div class="grid">
   <section class="c8">
+    @if (!readOnly()) {
     <div class="card composer">
       <label for="postText">¿Qué estás aprendiendo hoy?</label>
       <textarea
@@ -40,6 +49,12 @@
         </button>
       </div>
     </div>
+    } @else {
+      <div class="notice" role="note" style="margin-bottom: 4px">
+        <app-icon name="eye" [size]="17" />
+        <span>Estás viendo la comunidad en modo lectura: no puedes publicar ni responder.</span>
+      </div>
+    }
 
     <div class="actions" style="margin: 16px 0">
       <button
@@ -51,14 +66,16 @@
       >
         Recientes
       </button>
-      <button
-        type="button"
-        class="btn ghost"
-        [class.alt]="filter() === 'mine'"
-        (click)="setFilter('mine')"
-      >
-        Mis publicaciones
-      </button>
+      @if (!readOnly()) {
+        <button
+          type="button"
+          class="btn ghost"
+          [class.alt]="filter() === 'mine'"
+          (click)="setFilter('mine')"
+        >
+          Mis publicaciones
+        </button>
+      }
     </div>
 
     @if (loading()) {
@@ -99,17 +116,24 @@
           </div>
           <p class="post-content">{{ post.content }}</p>
           <div class="post-actions">
-            <button
-              type="button"
-              class="post-action"
-              [class.liked]="isLiked(post)"
-              [attr.aria-pressed]="isLiked(post)"
-              [attr.aria-label]="'Me gusta, ' + post.likes + ' reacciones'"
-              (click)="toggleLike(post)"
-            >
-              <app-icon name="heart" [size]="17" />
-              {{ post.likes }}
-            </button>
+            @if (readOnly()) {
+              <span class="post-action" aria-label="Reacciones, sin interacción">
+                <app-icon name="heart" [size]="17" />
+                {{ post.likes }}
+              </span>
+            } @else {
+              <button
+                type="button"
+                class="post-action"
+                [class.liked]="isLiked(post)"
+                [attr.aria-pressed]="isLiked(post)"
+                [attr.aria-label]="'Me gusta, ' + post.likes + ' reacciones'"
+                (click)="toggleLike(post)"
+              >
+                <app-icon name="heart" [size]="17" />
+                {{ post.likes }}
+              </button>
+            }
             <button
               type="button"
               class="post-action"
@@ -141,31 +165,37 @@
                 }
               }
 
-              <form class="reply-compose" (ngSubmit)="sendReply(post)">
-                <span class="avatar sm" aria-hidden="true">
-                  {{ student()?.initials ?? 'TU' }}
-                </span>
-                <label class="sr-only" [for]="'reply-' + post.id">Escribe una respuesta</label>
-                <input
-                  [id]="'reply-' + post.id"
-                  name="replyText"
-                  class="input"
-                  placeholder="Escribe una respuesta…"
-                  [(ngModel)]="replyDrafts[post.id]"
-                />
-                <button
-                  type="submit"
-                  class="btn"
-                  [disabled]="!replyDrafts[post.id]?.trim() || replyingPostId() === post.id"
-                  aria-label="Publicar respuesta"
-                >
-                  @if (replyingPostId() === post.id) {
-                    <span class="spinner sm on-brand" aria-hidden="true"></span>
-                  } @else {
-                    <app-icon name="send" [size]="17" />
-                  }
-                </button>
-              </form>
+              @if (readOnly()) {
+                <p class="mini muted reply-readonly">
+                  Puedes leer el hilo, pero no responder: este espacio es de los estudiantes.
+                </p>
+              } @else {
+                <form class="reply-compose" (ngSubmit)="sendReply(post)">
+                  <span class="avatar sm" aria-hidden="true">
+                    {{ student()?.initials ?? 'TU' }}
+                  </span>
+                  <label class="sr-only" [for]="'reply-' + post.id">Escribe una respuesta</label>
+                  <input
+                    [id]="'reply-' + post.id"
+                    name="replyText"
+                    class="input"
+                    placeholder="Escribe una respuesta…"
+                    [(ngModel)]="replyDrafts[post.id]"
+                  />
+                  <button
+                    type="submit"
+                    class="btn"
+                    [disabled]="!replyDrafts[post.id]?.trim() || replyingPostId() === post.id"
+                    aria-label="Publicar respuesta"
+                  >
+                    @if (replyingPostId() === post.id) {
+                      <span class="spinner sm on-brand" aria-hidden="true"></span>
+                    } @else {
+                      <app-icon name="send" [size]="17" />
+                    }
+                  </button>
+                </form>
+              }
             </div>
           }
         </article>

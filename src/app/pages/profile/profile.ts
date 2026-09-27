@@ -27,6 +27,35 @@ export class ProfilePage {
   private readonly errors = inject(ErrorService);
 
   readonly student = this.session.student;
+  /** El padre supervisa a su hijo: no tiene datos escolares propios que editar. */
+  readonly isParent = this.session.isParent;
+
+  /**
+   * Código que el estudiante comparte con su familia. El padre no tiene uno
+   * propio (escribe el de su hijo), así que se resuelve desde el perfil.
+   */
+  readonly linkedCode = computed(() => this.session.childCode() ?? '');
+  readonly copied = signal(false);
+
+  /**
+   * Copia el código al portapapeles. Si el navegador lo bloquea (contexto no
+   * seguro) se avisa en vez de fingir que se copió: el código sigue visible en
+   * pantalla para escribirlo a mano.
+   */
+  copyCode(): void {
+    const code = this.linkedCode();
+    if (!code) return;
+    navigator.clipboard
+      ?.writeText(code)
+      .then(() => {
+        this.copied.set(true);
+        this.toast.success('Código copiado.');
+        setTimeout(() => this.copied.set(false), 2000);
+      })
+      .catch(() =>
+        this.toast.show('No se pudo copiar. Apunta el código a mano: ' + code),
+      );
+  }
 
   /** El docente edita su materia principal; el estudiante, su grado. */
   readonly gradeLabel = computed(() =>

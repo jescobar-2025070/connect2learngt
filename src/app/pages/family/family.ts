@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
@@ -9,10 +9,17 @@ import { AccessEntry, Guardian, SharingPreference } from '../../core/models';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 import { IconComponent } from '../../shared/icon';
+import { ChildPanelComponent } from './child-panel';
 
 @Component({
   selector: 'app-family',
-  imports: [FormsModule, ThemeToggleComponent, ModalComponent, IconComponent],
+  imports: [
+    FormsModule,
+    ThemeToggleComponent,
+    ModalComponent,
+    IconComponent,
+    ChildPanelComponent,
+  ],
   templateUrl: './family.html',
 })
 export class FamilyPage {
@@ -22,32 +29,21 @@ export class FamilyPage {
   private readonly errors = inject(ErrorService);
 
   /**
-   * La pantalla cambia de sentido según el rol: el estudiante vincula a sus
-   * tutores legales, el padre ve a los hijos que ya están vinculados a su cuenta.
+   * El padre no gestiona a sus familiares: eso lo hace el hijo, que es quien
+   * autoriza. El padre tiene su propia pantalla (`ChildPanelComponent`), donde
+   * solo acompaña al menor vinculado. Compartir la misma vista obligaba a
+   * inventar ramas para un caso que nunca ocurre y a ocultar acciones que el
+   * padre no debería tener, así que se separan los dosComponent de raíz.
    */
   readonly isParent = this.session.isParent;
 
-  readonly pageTitle = computed(() =>
-    this.isParent() ? 'Mis hijos' : 'Supervisión familiar',
-  );
-  readonly pageSubtitle = computed(() =>
-    this.isParent()
-      ? 'Acompaña el progreso de los menores vinculados a tu cuenta.'
-      : 'Controla qué comparte tu cuenta con tus padres o tutores.',
-  );
-  readonly listTitle = computed(() =>
-    this.isParent() ? 'Hijos vinculados' : 'Familiares vinculados',
-  );
-  readonly listHint = computed(() =>
-    this.isParent()
-      ? 'Cada hijo autoriza por separado qué información puedes ver desde aquí.'
-      : 'Las personas vinculadas pueden ver la información que actives en "Qué compartimos", a la derecha.',
-  );
-  readonly emptyHint = computed(() =>
-    this.isParent()
-      ? 'Aún no tienes hijos vinculados. Pide a tu hijo su código de vinculación e ingrésalo abajo.'
-      : 'Aún no tienes familiares vinculados. Invita a tu padre, madre o tutor abajo.',
-  );
+  readonly pageTitle = 'Supervisión familiar';
+  readonly pageSubtitle = 'Controla qué comparte tu cuenta con tus padres o tutores.';
+  readonly listTitle = 'Familiares vinculados';
+  readonly listHint =
+    'Las personas vinculadas pueden ver la información que actives en "Qué compartimos", a la derecha.';
+  readonly emptyHint =
+    'Aún no tienes familiares vinculados. Invita a tu padre, madre o tutor abajo.';
 
   readonly guardians = signal<Guardian[]>([]);
 

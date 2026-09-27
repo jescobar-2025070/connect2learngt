@@ -1953,6 +1953,36 @@ select.input {
 .reply-compose .input {
   flex: 1;
 }
+/* Hilo visto en modo lectura (rol padre): el hueco del formulario se explica. */
+.reply-readonly {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+/* ---------- código de vinculación (perfil del estudiante) ---------- */
+.linked-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 12px);
+  background: var(--surface-3);
+}
+.linked-code-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.linked-code-value code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
 
 /* ---------- history ---------- */
 .history-list {

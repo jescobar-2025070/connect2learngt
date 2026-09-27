@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { SessionService } from '../../core/session.service';
+import { LINKED_CODE_PATTERN, SessionService, normalizeLinkedCode } from '../../core/session.service';
 import { ROLE_OPTIONS, RoleOption, UserRole, roleOption } from '../../core/models';
 import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
@@ -95,7 +95,7 @@ export class RegisterPage {
     return `La edad mínima para este rol es de ${ageMin} años.`;
   }
   get childCodeInvalid(): boolean {
-    return this.submitted() && this.isParent() && !/^[A-Za-z0-9-]{6,}$/.test(this.childCode.trim());
+    return this.submitted() && this.isParent() && !LINKED_CODE_PATTERN.test(normalizeLinkedCode(this.childCode));
   }
   get termsInvalid(): boolean {
     return this.submitted() && !this.terms;
@@ -133,7 +133,7 @@ export class RegisterPage {
         // describen al hijo, no a él, así que no se preguntan.
         institution: this.isParent() ? '' : this.institution.trim() || 'Sin especificar',
         grade: this.isParent() ? '' : this.grade.trim() || this.defaultGrade(),
-        childCode: this.isParent() ? this.childCode.trim().toUpperCase() : undefined,
+        childCode: this.isParent() ? normalizeLinkedCode(this.childCode) : undefined,
       })
       .pipe(
         finalize(() => this.loading.set(false)),

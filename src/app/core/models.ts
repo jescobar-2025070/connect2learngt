@@ -108,6 +108,16 @@ export interface Booking {
   time: string;
   modality: string;
   goal: string;
+  /** Nombre de quien beneficia la sesión. */
+  forName: string;
+  /**
+   * Id del hijo cuando la agenda un padre. Vacío significa que la sesión es
+   * para quien la reserva: es la razón por la que el padre nunca termina con
+   * una tutoría a su propio nombre.
+   */
+  forChildId?: string;
+  /** Rol que agendó, para distinguir "la reservaste tú" de "la reservó tu hijo". */
+  bookedByRole: UserRole;
 }
 
 export interface ResourceItem {
@@ -200,6 +210,39 @@ export interface ChatMessage {
 export interface SubjectProgress {
   subject: string;
   percent: number;
+}
+
+/**
+ * Hijo menor vinculado a una cuenta de familia.
+ *
+ * Es una entidad propia, no un `UserProfile`: el padre no inicia sesión con la
+ * cuenta de su hijo, la administra. Por eso el panel del padre necesita un
+ * modelo que ya traiga el progreso agregado (avance por materia, horas de la
+ * semana, tutores) en lugar de tener que calcularlo desde cero.
+ */
+export interface ChildAccount {
+  id: string;
+  name: string;
+  initials: string;
+  age: number;
+  grade: string;
+  institution: string;
+  /** Materias en las que el hijo está trabajando. */
+  interests: string[];
+  /**
+   * Código que el hijo comparte con su familia. Es lo que convierte la
+   * vinculación en algo verificable: el padre no escribe un correo cualquiera,
+   * entra el código que el hijo generó.
+   */
+  linkedCode: string;
+  /** Cumplimiento de la meta semanal, en porcentaje. */
+  weeklyGoalPercent: number;
+  hoursThisWeek: number;
+  /** Días consecutivos estudiando. */
+  studyStreak: number;
+  subjectProgress: SubjectProgress[];
+  /** Tutores con los que el hijo tiene sesiones. */
+  tutorIds: string[];
 }
 
 export interface StudyGroup {

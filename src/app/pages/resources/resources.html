@@ -1,13 +1,21 @@
 <div class="topbar">
   <div class="page-head">
     <h1>Explorar recursos</h1>
-    <p class="muted mt-0">Descubre y comparte material de estudio de todas las materias.</p>
+    <p class="muted mt-0">
+      @if (canUpload()) {
+        Descubre y comparte material de estudio de todas las materias.
+      } @else {
+        Descarga material de estudio de todas las materias.
+      }
+    </p>
   </div>
   <div class="top-actions">
-    <button type="button" class="btn" (click)="openUpload()">
-      <app-icon name="upload" [size]="17" [strokeWidth]="2" />
-      Subir recurso
-    </button>
+    @if (canUpload()) {
+      <button type="button" class="btn" (click)="openUpload()">
+        <app-icon name="upload" [size]="17" [strokeWidth]="2" />
+        Subir recurso
+      </button>
+    }
     <app-theme-toggle />
   </div>
 </div>

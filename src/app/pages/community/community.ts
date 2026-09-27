@@ -7,6 +7,7 @@ import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { CommunityPost, CommunityReply } from '../../core/models';
+import { capabilitiesOf } from '../../core/permissions';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
@@ -22,6 +23,14 @@ export class CommunityPage {
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
   private readonly errors = inject(ErrorService);
+
+  /**
+   * El padre entra a la comunidad a leer, no a participar. Los permisos se
+   * comprueban aquí, en el método, además de ocultar el control: si alguien
+   * llama a `publish()` desde la consola, el guard del rol lo detiene igual.
+   */
+  readonly caps = capabilitiesOf(this.session.role());
+  readonly readOnly = computed(() => !this.caps.publish);
 
   readonly student = this.session.student;
   readonly posts = signal<CommunityPost[]>([]);
@@ -78,6 +87,10 @@ export class CommunityPage {
   publish(): void {
     const text = this.draft.trim();
     if (!text || this.posting()) return;
+    if (!this.caps.publish) {
+      this.toast.show('Como familiar puedes leer la comunidad, pero no publicar.');
+      return;
+    }
 
     this.posting.set(true);
     const student = this.student();
@@ -107,6 +120,7 @@ export class CommunityPage {
   }
 
   toggleLike(post: CommunityPost): void {
+    if (!this.caps.publish) return;
     const liked = new Set(this.likedIds());
     const isLiked = liked.has(post.id);
     isLiked ? liked.delete(post.id) : liked.add(post.id);
@@ -152,6 +166,7 @@ export class CommunityPage {
   sendReply(post: CommunityPost): void {
     const text = (this.replyDrafts[post.id] ?? '').trim();
     if (!text || this.replyingPostId() === post.id) return;
+    if (!this.caps.chat) return;
 
     this.replyingPostId.set(post.id);
     const student = this.student();

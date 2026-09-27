@@ -25,19 +25,45 @@
           <span class="mini muted">Edad</span>
           <strong>{{ s.age }} años</strong>
         </div>
-        <div>
-          <span class="mini muted">Institución</span>
-          <strong>{{ s.institution || 'No indicada' }}</strong>
-        </div>
-        <div>
-          <span class="mini muted">{{ gradeLabel() }}</span>
-          <strong>{{ s.grade || 'Sin definir' }}</strong>
-        </div>
+        @if (!isParent()) {
+          <div>
+            <span class="mini muted">Institución</span>
+            <strong>{{ s.institution || 'No indicada' }}</strong>
+          </div>
+          <div>
+            <span class="mini muted">{{ gradeLabel() }}</span>
+            <strong>{{ s.grade || 'Sin definir' }}</strong>
+          </div>
+        }
         <div>
           <span class="mini muted">Miembro desde</span>
           <strong>Octubre 2025</strong>
         </div>
       </div>
+
+      @if (!isParent()) {
+        <div class="linked-code" style="margin-top: 20px">
+          <div>
+            <strong>Código de vinculación</strong>
+            <p class="mini muted mt-0">
+              Quien administer tu cuenta —un padre o una madre— lo escribe para ver lo que decidas
+              compartir. Solo funciona con este código.
+            </p>
+          </div>
+          <div class="linked-code-value">
+            <code>{{ linkedCode() }}</code>
+            <button
+              type="button"
+              class="btn ghost sm"
+              (click)="copyCode()"
+              [attr.aria-label]="'Copiar el código ' + linkedCode()"
+            >
+              <app-icon name="copy" [size]="16" />
+              {{ copied() ? 'Copiado' : 'Copiar' }}
+            </button>
+          </div>
+        </div>
+      }
 
       <div class="section-head" style="margin-top: 20px">
         <h3 class="mt-0">Tus intereses</h3>
@@ -115,20 +141,24 @@
           [(ngModel)]="editAge"
         />
       </div>
+      @if (!isParent()) {
+        <div class="field">
+          <label for="editGrade">{{ gradeLabel() }}</label>
+          <input id="editGrade" name="editGrade" class="input" [(ngModel)]="editGrade" />
+        </div>
+      }
+    </div>
+    @if (!isParent()) {
       <div class="field">
-        <label for="editGrade">{{ gradeLabel() }}</label>
-        <input id="editGrade" name="editGrade" class="input" [(ngModel)]="editGrade" />
+        <label for="editInstitution">Institución</label>
+        <input
+          id="editInstitution"
+          name="editInstitution"
+          class="input"
+          [(ngModel)]="editInstitution"
+        />
       </div>
-    </div>
-    <div class="field">
-      <label for="editInstitution">Institución</label>
-      <input
-        id="editInstitution"
-        name="editInstitution"
-        class="input"
-        [(ngModel)]="editInstitution"
-      />
-    </div>
+    }
     <div class="actions" style="justify-content: flex-end">
       <button type="button" class="btn ghost" (click)="showEdit.set(false)">Cancelar</button>
       <button type="button" class="btn" [disabled]="savingEdit()" (click)="saveEdit()">

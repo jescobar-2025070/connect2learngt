@@ -1,0 +1,245 @@
+<div class="topbar">
+  <div class="page-head">
+    <h1>Mi hijo</h1>
+    <p class="muted mt-0">Acompaña su progreso y agenda sus tutorías.</p>
+  </div>
+  <div class="top-actions">
+    <app-theme-toggle />
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid" aria-busy="true">
+    <span class="sr-only">Cargando el panel de tu hijo…</span>
+    <div class="card c8">
+      <div class="skeleton title"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line medium"></div>
+    </div>
+    <div class="card c4">
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+    </div>
+  </div>
+} @else if (child(); as kid) {
+  <div class="grid">
+    <!-- Cabecera: quién es el hijo que se está administrando -->
+    <section class="card c8" aria-labelledby="child-title">
+      <div class="section-head">
+        <div class="tutor-profile-head">
+          <span class="avatar xl" aria-hidden="true">{{ kid.initials }}</span>
+          <div>
+            <h1 id="child-title" class="mt-0">{{ kid.name }}</h1>
+            <p class="muted mini mt-0">
+              {{ kid.age }} años · {{ kid.grade }} · {{ kid.institution }}
+            </p>
+            <p class="mini muted mt-0">
+              <span class="pill brand">Código {{ kid.linkedCode }}</span>
+            </p>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn" routerLink="/app/tutores">
+            <app-icon name="calendar" [size]="17" />
+            Reservar tutoría
+          </a>
+        </div>
+      </div>
+
+      <h2 class="sr-only">Sesiones agendadas</h2>
+      @if (upcoming().length === 0) {
+        <div class="empty" style="margin-top: 12px">
+          <p><strong>{{ kid.name }} no tiene sesiones agendadas.</strong></p>
+          <p class="mini muted mt-0">Puedes buscar un tutor y agendarle la primera.</p>
+        </div>
+      } @else {
+        <div class="stack" style="margin-top: 12px">
+          @for (b of upcoming(); track b.id) {
+            <div class="row">
+              <span class="avatar" aria-hidden="true">{{ b.tutorInitials }}</span>
+              <span style="display: flex; align-items: center; gap: 12px; min-width: 0">
+                <strong>{{ b.subject }} con {{ b.tutorName }}</strong>
+                <span class="mini muted" style="display: block">
+                  {{ b.date }} · {{ b.time }} · {{ b.modality }}
+                </span>
+                <span class="mini muted" style="display: block">{{ bookedByLabel(b) }}</span>
+              </span>
+              <span class="pill">{{ b.goal }}</span>
+            </div>
+          }
+        </div>
+      }
+      <p class="hint">
+        Puedes añadir sesiones, pero no editar ni cancelar las que agendó tu hijo.
+      </p>
+    </section>
+
+    <!-- Progreso -->
+    <section class="card c4" aria-labelledby="child-progress-title">
+      <h2 id="child-progress-title">Progreso de la semana</h2>
+      <p class="stat">{{ kid.weeklyGoalPercent }}%</p>
+      <p class="muted mini">Meta semanal completada</p>
+      <div
+        class="bar"
+        role="progressbar"
+        [attr.aria-valuenow]="kid.weeklyGoalPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-label="Meta semanal del hijo"
+      >
+        <i [style.width.%]="kid.weeklyGoalPercent"></i>
+      </div>
+      <div class="mini-stats">
+        <div>
+          <strong>{{ kid.studyStreak }}</strong>
+          <span class="mini muted">días de racha</span>
+        </div>
+        <div>
+          <strong>{{ kid.hoursThisWeek }} h</strong>
+          <span class="mini muted">esta semana</span>
+        </div>
+      </div>
+
+      <h2 class="mt-0" style="margin-top: 20px">Avance por materia</h2>
+      <div class="subject-progress">
+        @for (sp of kid.subjectProgress; track sp.subject) {
+          <div class="subject-row">
+            <span class="mini">{{ sp.subject }}</span>
+            <span class="bar" role="progressbar" [attr.aria-valuenow]="sp.percent" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="sp.subject">
+              <i [style.width.%]="sp.percent"></i>
+            </span>
+            <strong class="mini">{{ sp.percent }}%</strong>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Tutores -->
+    <section class="card c4" aria-labelledby="child-tutors-title">
+      <h2 id="child-tutors-title">Tutores con los que curso</h2>
+      @if (tutors().length === 0) {
+        <p class="muted mini">Aún no tiene tutores asignados.</p>
+      }
+      <div class="stack">
+        @for (t of tutors(); track t.id) {
+          <a class="row" [routerLink]="['/app/tutores', t.id]">
+            <span style="display: flex; align-items: center; gap: 12px; min-width: 0">
+              <span class="avatar" aria-hidden="true">{{ t.initials }}</span>
+              <span>
+                <strong>{{ t.name }}</strong>
+                <span class="mini muted" style="display: block">
+                  {{ t.subjects.join(' · ') }} · {{ t.rating }}★
+                </span>
+              </span>
+            </span>
+            <app-icon name="arrowRight" [size]="17" />
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- Qué comparte el hijo: solo lectura, lo autoriza él -->
+    <section class="card c4" aria-labelledby="child-sharing-title">
+      <h2 id="child-sharing-title">Qué comparte {{ kid.name }}</h2>
+      <p class="muted mini">
+        Lo decide tu hijo desde su cuenta. Aquí solo ves el estado, no se cambia.
+      </p>
+      @for (p of sharing(); track p.id) {
+        <div class="pref-row">
+          <div class="pref-text">
+            <strong>{{ p.label }}</strong>
+            <p class="mini muted mt-0">{{ p.description }}</p>
+          </div>
+          <span class="pill" [class.success]="p.enabled" [class.muted]="!p.enabled">
+            {{ p.enabled ? 'Compartido' : 'No compartido' }}
+          </span>
+        </div>
+      }
+
+      <button type="button" class="btn ghost block" style="margin-top: 16px" (click)="openHistory()">
+        <app-icon name="eye" [size]="17" />
+        Ver historial de accesos
+      </button>
+      <button
+        type="button"
+        class="btn ghost block"
+        style="margin-top: 8px"
+        [disabled]="unlinking()"
+        (click)="askUnlink()"
+      >
+        @if (unlinking()) {
+          <span class="spinner sm" aria-hidden="true"></span>
+          <span>Desvinculando…</span>
+        } @else {
+          <span>Desvincular a {{ kid.name }}</span>
+        }
+      </button>
+    </section>
+  </div>
+} @else {
+  <!-- Sin hijo vinculado: se pide el código, no se muestran datos de relleno -->
+  <div class="grid">
+    <section class="card c8">
+      <span class="notfound-badge" aria-hidden="true" style="width: 56px; height: 56px">
+        <app-icon name="shield" [size]="26" />
+      </span>
+      <h1 class="mt-0">Aún no tienes un hijo vinculado</h1>
+      <p class="muted">
+        Pídele a tu hijo su código de vinculación (aparece en su perfil) y escríbelo aquí. Solo
+        verás lo que él decida compartir.
+      </p>
+
+      <form class="invite-form" (ngSubmit)="link()" style="margin-top: 16px">
+        <input
+          id="childCode"
+          name="childCode"
+          type="text"
+          class="input"
+          placeholder="C2L-4F7K-2Q"
+          autocapitalize="characters"
+          [(ngModel)]="childCode"
+          [attr.aria-invalid]="!!codeError()"
+          [attr.aria-describedby]="codeError() ? 'code-error' : null"
+        />
+        <button type="submit" class="btn" [disabled]="!childCode.trim() || linking()">
+          @if (linking()) {
+            <span class="spinner sm on-brand" aria-hidden="true"></span>
+            <span>Vinculando…</span>
+          } @else {
+            <span>Vincular</span>
+          }
+        </button>
+      </form>
+      @if (codeError()) {
+        <p class="field-error" id="code-error">{{ codeError() }}</p>
+      }
+    </section>
+  </div>
+}
+
+@if (showHistory()) {
+  <app-modal [open]="true" title="Historial de accesos" (close)="showHistory.set(false)">
+    <p class="muted mini" style="margin-top: 0">
+      Actividad reciente de los accesos a los datos de tu hijo.
+    </p>
+    @if (historyLoading()) {
+      <div aria-busy="true">
+        <span class="sr-only">Cargando historial…</span>
+        <div class="skeleton line"></div>
+        <div class="skeleton line medium"></div>
+      </div>
+    } @else {
+      <div class="history-list">
+        @for (h of history(); track h.id) {
+          <div class="history-item">
+            <span class="ntf-icon" aria-hidden="true"><app-icon [name]="h.icon" [size]="17" /></span>
+            <div style="flex: 1; min-width: 0">
+              <span>{{ h.text }}</span>
+              <span class="mini muted" style="display: block">{{ h.timeAgo }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </app-modal>
+}

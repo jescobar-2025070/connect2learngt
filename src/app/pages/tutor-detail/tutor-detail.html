@@ -119,6 +119,32 @@
         }
       </div>
 
+      @if (caps.bookForChild) {
+        <div class="notice" role="note">
+          @if (bookingFor(); as child) {
+            <app-icon name="shield" [size]="17" />
+            <span>Esta sesión se agenda para <strong>{{ child.name }}</strong>.</span>
+          } @else {
+            <app-icon name="alert" [size]="17" />
+            <span>
+              No tienes ningún hijo vinculado. Pide su código en la sección
+              <a routerLink="/app/familia">Supervisión familiar</a> para poder agendar.
+            </span>
+          }
+        </div>
+
+        @if (children().length > 1) {
+          <div class="field" style="margin-top: 16px">
+            <label for="child">Para quién es la tutoría</label>
+            <select id="child" name="child" class="input" [(ngModel)]="childId">
+              @for (c of children(); track c.id) {
+                <option [value]="c.id">{{ c.name }} · {{ c.grade }}</option>
+              }
+            </select>
+          </div>
+        }
+      }
+
       <div class="field" style="margin-top: 16px">
         <label for="modality">Modalidad</label>
         <select id="modality" name="modality" class="input" [(ngModel)]="modality">
@@ -128,7 +154,9 @@
       </div>
 
       <div class="field">
-        <label for="goal">¿Qué quieres reforzar?</label>
+        <label for="goal">
+          {{ bookingFor() ? '¿Qué quieres que refuerce ' + bookingFor()!.name + '?' : '¿Qué quieres reforzar?' }}
+        </label>
         <textarea
           id="goal"
           name="goal"
@@ -152,12 +180,14 @@
       <button
         type="button"
         class="btn block"
-        [disabled]="!selectedSlot() || booking()"
+        [disabled]="!selectedSlot() || booking() || !canConfirm()"
         (click)="confirm()"
       >
         @if (booking()) {
           <span class="spinner sm on-brand" aria-hidden="true"></span>
           <span>Confirmando…</span>
+        } @else if (bookingFor(); as child) {
+          <span>Reservar para {{ child.name }}</span>
         } @else {
           <span>Confirmar reserva</span>
         }

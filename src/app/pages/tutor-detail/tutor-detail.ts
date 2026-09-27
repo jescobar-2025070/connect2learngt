@@ -6,7 +6,8 @@ import { CatalogService } from '../../core/catalog.service';
 import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
-import { Booking, Tutor, TutorReview, TutorSlot } from '../../core/models';
+import { Booking, ChildAccount, Tutor, TutorReview, TutorSlot } from '../../core/models';
+import { capabilitiesOf } from '../../core/permissions';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
@@ -29,6 +30,25 @@ export class TutorDetailPage {
   readonly loading = signal(true);
   readonly booking = signal(false);
   readonly selectedSlotId = signal<string | null>(null);
+
+  /**
+   * Quién agenda. El padre no puede reservarse una tutoría a sí mismo: entra
+   * aquí para agendarle a su hijo, y la reserva sale a nombre del menor.
+   */
+  readonly caps = capabilitiesOf(this.session.role());
+  readonly children = signal<ChildAccount[]>([]);
+  readonly childId = signal<string | null>(null);
+
+  /** Hijo al que se le agenda; `null` si quien agenda es el dueño de la cuenta. */
+  readonly bookingFor = computed<ChildAccount | null>(() => {
+    if (!this.caps.bookForChild) return null;
+    return this.children().find((c) => c.id === this.childId()) ?? null;
+  });
+
+  /** Se puede confirmar solo si hay beneficiario válido: el padre, su hijo. */
+  readonly canConfirm = computed(
+    () => this.caps.bookForSelf || this.bookingFor() !== null,
+  );
 
   // Reseñas completas
   readonly showReviews = signal(false);
@@ -63,6 +83,22 @@ export class TutorDetailPage {
 
   constructor() {
     this.load();
+    if (this.caps.bookForChild) this.loadChildren();
+  }
+
+  /**
+   * Hijos vinculados, para agendarles una sesión. Si el padre no tiene ninguno
+   * vinculado, la reserva queda deshabilitada: no se puede agendar "para ti"
+   * solo porque el rol lo permita en abstracto.
+   */
+  private loadChildren(): void {
+    this.catalog
+      .getLinkedChildren()
+      .pipe(this.errors.catch('tutor.hijos', () => this.loadChildren()))
+      .subscribe((list) => {
+        this.children.set(list);
+        this.childId.set(list[0]?.id ?? null);
+      });
   }
 
   /**
@@ -150,8 +186,15 @@ export class TutorDetailPage {
     const tutor = this.tutor();
     const slot = this.selectedSlot();
     if (!tutor || !slot || this.booking()) return;
+    // El padre solo puede agendar para un hijo vinculado: nunca para sí mismo.
+    if (!this.canConfirm()) {
+      this.toast.show('Vincula a un hijo para poder agendar una tutoría.');
+      return;
+    }
 
     this.booking.set(true);
+    const child = this.bookingFor();
+    const account = this.session.student();
     const newBooking: Booking = {
       id: `bk-${Date.now()}`,
       tutorName: tutor.name,
@@ -161,6 +204,9 @@ export class TutorDetailPage {
       time: slot.time,
       modality: this.modality,
       goal: this.goal.trim() || 'Reforzar los temas del próximo examen',
+      forName: child?.name ?? account?.name ?? 'Estudiante',
+      forChildId: child?.id,
+      bookedByRole: this.session.role(),
     };
 
     this.session

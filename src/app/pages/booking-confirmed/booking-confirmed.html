@@ -5,10 +5,15 @@
         <app-icon name="check" [size]="30" [strokeWidth]="2.6" />
       </span>
 
-      <h1>¡Tu tutoría está reservada!</h1>
+      <h1>{{ headTitle() }}</h1>
       <p class="muted">
-        Enviamos la confirmación a tu correo y le avisamos a {{ b.tutorName }}. Recibirás un
-        recordatorio una hora antes.
+        @if (forChild()) {
+          Enviamos la confirmación a tu correo y le avisamos a {{ b.tutorName }} y a
+          {{ b.forName }}. Recibiréis un recordatorio una hora antes.
+        } @else {
+          Enviamos la confirmación a tu correo y le avisamos a {{ b.tutorName }}. Recibirás un
+          recordatorio una hora antes.
+        }
       </p>
 
       <div class="confirm-details">
@@ -19,6 +24,16 @@
             <strong>{{ b.tutorName }}</strong>
           </span>
         </div>
+        @if (forChild()) {
+          <div class="row">
+            <span class="muted mini">Para</span>
+            <strong>{{ b.forName }}</strong>
+          </div>
+          <div class="row">
+            <span class="muted mini">Reservada por</span>
+            <strong>{{ b.bookedByRole === 'padre' ? 'Su familia' : 'El propio estudiante' }}</strong>
+          </div>
+        }
         <div class="row">
           <span class="muted mini">Materia</span>
           <strong>{{ b.subject }}</strong>
@@ -36,13 +51,13 @@
           <strong>{{ b.modality }}</strong>
         </div>
         <div class="row confirm-goal">
-          <span class="muted mini">Tu objetivo</span>
+          <span class="muted mini">{{ forChild() ? 'Objetivo de la sesión' : 'Tu objetivo' }}</span>
           <span>{{ b.goal }}</span>
         </div>
       </div>
 
       <div class="actions confirm-actions">
-        <a class="btn" routerLink="/app/inicio">Ir a mi panel</a>
+        <a class="btn" [routerLink]="panelRoute()">{{ panelLabel() }}</a>
         @if (addedToCalendar()) {
           <span class="calendar-added">
             <app-icon name="check" [size]="16" />

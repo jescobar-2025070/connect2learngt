@@ -32,7 +32,49 @@ cambia el formulario, el onboarding, la navegación y el copy de las pantallas:
 | --- | --- | --- | --- | --- |
 | **Estudiante** | Edad (15-25), grado, institución | ≥3 temas de interés | `/app/inicio` | — |
 | **Maestro / Tutor** | Edad (18+), materia principal, institución | ≥3 materias que imparte | `/app/inicio` | Tutorías, Supervisión familiar |
-| **Padre de familia** | Código de vinculación del hijo | Ninguno (se vincula con el código) | `/app/familia` | Tutorías, Grupos, Reputación |
+| **Padre de familia** | Código de vinculación del hijo | Ninguno (se vincula con el código) | `/app/familia` | Inicio, Grupos, Mensajes, Reputación, Intereses |
+
+### Matriz de permisos por rol
+
+El padre no es "un estudiante con menos cosas": es un rol de acompañamiento.
+No tiene panel propio ni datos escolares, y todo lo que hace en la aplicación
+es **en nombre de su hijo**. La tabla vive en un solo sitio,
+`src/app/core/permissions.ts`, y la consumen tanto el menú como los guards de
+ruta, de modo que ocultar una sección y bloquearla por URL no pueden divergir.
+
+| Sección | Estudiante | Tutor | Padre |
+| --- | :---: | :---: | :---: |
+| Inicio | ✅ | ✅ | — |
+| Tutorías (reservar) | ✅ | — | ✅ (a nombre del hijo) |
+| Comunidad | ✅ | ✅ | ✅ solo lectura |
+| Recursos | ✅ | ✅ | ✅ solo descarga |
+| Grupos de estudio | ✅ | ✅ | — |
+| Mensajes | ✅ | ✅ | — |
+| Reputación | ✅ | ✅ | — |
+| Supervisión familiar | ✅ (comparte) | — | ✅ (supervisa) |
+| Perfil | ✅ | ✅ | ✅ (sin datos escolares) |
+
+| Acción | Estudiante | Tutor | Padre |
+| --- | :---: | :---: | :---: |
+| Publicar en comunidad | ✅ | ✅ | — |
+| Subir recursos | ✅ | ✅ | — |
+| Chatear | ✅ | ✅ | — |
+| Unirse a grupos | ✅ | ✅ | — |
+| Reservar para sí mismo | ✅ | — | — |
+| Reservar para un hijo | — | — | ✅ |
+| Ver los datos de un hijo | — | — | ✅ |
+| Cambiar qué se comparte | ✅ | — | — |
+
+- Una sección no visible tampoco se alcanza escribiendo la URL: `sectionGuard`
+  (`src/app/core/auth.guard.ts`) lee `data.section` de la ruta, consulta
+  `canAccessSection()` y, si el rol no tiene acceso, avisa y devuelve a
+  `startRoute()`.
+- Los permisos se comprueban **también en el método**, no solo ocultando el
+  botón: `publish()`, `toggleLike()`, `sendReply()`, `openUpload()` y
+  `submitUpload()` rechazan la acción si el rol no la tiene.
+- La reserva del padre guarda a quién se le agenda (`forName`, `forChildId`) y
+  quién la agendó (`bookedByRole`), así que la misma sesión se distingue de la
+  que creó su hijo.
 
 - El selector de rol reutiliza el patrón `chip` / `aria-pressed` de las
   pantallas existentes; los tres roles se declaran una sola vez en
@@ -41,6 +83,18 @@ cambia el formulario, el onboarding, la navegación y el copy de las pantallas:
 - El rol se persiste en `sessionStorage` junto al resto de la sesión. Las
   sesiones guardadas antes de este cambio se recuperan como `estudiante`.
 - El login deduce el rol por el dominio del correo demo (`@docente`, `@familia`).
+
+### El código de vinculación
+
+El vínculo entre padre e hijo se hace con un código, no con un correo: el hijo
+lo genera su cuenta (`C2L-XXXX-XXX`, en **Perfil → Código de vinculación**) y el
+padre lo escribe al registrarse o en su panel. Un código que no existe no
+vincula a nadie, y "desvincular" es una acción real que borra el vínculo de la
+sesión.
+
+Como el prototipo guarda una sola sesión por navegador, el hijo de la demo y su
+padre no pueden estar conectados a la vez: la reserva que el padre agende se
+verá en su panel, pero no en una segunda ventana abierta como estudiante.
 
 ## Cómo hacer la demo
 
@@ -63,6 +117,18 @@ cambia el formulario, el onboarding, la navegación y el copy de las pantallas:
    Todas estas funciones son **simuladas** (sin backend), igual que el
    resto del flujo.
 
+### Probar el rol padre
+
+1. Entra en `/registro`, elige **Padre de familia** y escribe el código
+   `C2L-4F7K-2Q` (es el del estudiante de la demo) → `/app/familia`.
+2. En el panel del hijo verás su progreso semanal, el avance por materia, sus
+   sesiones —marcando cuáles agendó él y cuáles agendaste tú— y sus tutores.
+   Desde aquí puedes **reservarle** una tutoría nueva.
+3. Entra en **Comunidad**: se abre en modo lectura, sin compositor, sin
+   "me gusta" y sin poder responder. En **Recursos** se puede descargar pero
+   no subir. Si escribes `/app/mensajes` o `/app/inicio` a mano, el guard te
+   devuelve al panel con un aviso.
+
 ### Probar el registro por rol
 
 1. Entra en `/registro` y elige las tres tarjetas de rol: al cambiar de rol
@@ -70,11 +136,16 @@ cambia el formulario, el onboarding, la navegación y el copy de las pantallas:
    grado/materia y aparecen los campos propios (materias para el docente,
    código de vinculación para el padre).
 2. **Estudiante:** edad 15-25 → `/intereses` → `/app/inicio` con las 9
-   secciones en el menú.
+   secciones en el menú. En **Perfil** aparece el código de vinculación para
+   compartirlo con la familia.
 3. **Maestro / Tutor:** edad 18+ → `/intereses` con el texto "¿Qué materias
    impartes?" → `/app/inicio` sin "Tutorías" ni "Supervisión familiar".
 4. **Padre de familia:** sin rango de edad, con código de vinculación →
-   entra directo a `/app/familia` ("Mis hijos"), sin pasar por intereses.
+   entra directo a `/app/familia` (panel del hijo), sin pasar por intereses.
+   Con el código de la demo (`C2L-4F7K-2Q`, el mismo que aparece en el perfil
+   del estudiante demo) ve el progreso, las sesiones y los tutores del hijo; con
+   cualquier otro código ve el estado "sin hijo vinculado" y puede intentarlo
+   otra vez.
 
 ## Funciones simuladas añadidas en esta iteración
 

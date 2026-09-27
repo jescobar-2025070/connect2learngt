@@ -5,6 +5,27 @@ import { Booking, UserProfile, UserRole, roleOption } from './models';
 
 const STORAGE_KEY = 'c2l-session';
 
+/**
+ * Formato del código de vinculación: `C2L-XXXX-XXX`, con cuatro y tres
+ * caracteres alfanuméricos. Vive aquí porque es la sesión la que lo emite
+ * (registro y restauración) y la que lo consume el panel del padre: una sola
+ * definición evita que el registro acepte un formato que el panel rechaza.
+ */
+export const LINKED_CODE_PATTERN = /^C2L-[A-Z0-9]{4}-[A-Z0-9]{3}$/;
+
+/** Emite un código de vinculación nuevo para una cuenta de estudiante. */
+export function generateLinkedCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const block = (n: number): string =>
+    Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+  return `C2L-${block(4)}-${block(3)}`;
+}
+
+/** Normaliza lo que escribe un padre: mayúsculas y sin espacios sobrantes. */
+export function normalizeLinkedCode(code: string): string {
+  return code.trim().toUpperCase();
+}
+
 interface PersistedSession {
   student: UserProfile;
   bookings: Booking[];
@@ -44,6 +65,23 @@ export class SessionService {
   readonly isTutor = computed(() => this.role() === 'tutor');
   readonly isParent = computed(() => this.role() === 'padre');
 
+  /**
+   * Código de vinculación del hijo. Es la única vía por la que un padre llega
+   * a los datos de un menor: sin él no hay hijo que supervisar, así que el
+   * panel familiar debe poder Mostrar el estado "sin vincular" en vez de
+   * inventarse datos.
+   */
+  readonly childCode = computed<string | null>(() => {
+    const code = this._student()?.childCode;
+    return code ? normalizeLinkedCode(code) : null;
+  });
+
+  /** ¿Tiene algún hijo vinculado? Determina qué muestra el panel familiar. */
+  readonly hasLinkedChild = computed(() => this.childCode() !== null);
+
+  /** Sesiones que el padre agendó para un hijo, no para sí mismo. */
+  readonly childBookings = computed(() => this._bookings().filter((b) => !!b.forChildId));
+
   /** Pantalla de inicio según el rol. */
   readonly startRoute = computed(() => roleOption(this.role()).startRoute);
 
@@ -71,7 +109,14 @@ export class SessionService {
     return of(student).pipe(delay(1200));
   }
 
-  /** Registro simulado: reutiliza los datos del formulario y el rol elegido. */
+  /**
+   * Registro simulado: reutiliza los datos del formulario y el rol elegido.
+   *
+   * El estudiante recibe un código de vinculación recién generado (es lo que
+   * comparte con su familia), aunque el perfil base de la demo traiga el suyo.
+   * El padre hace lo contrario: no tiene código propio, escribe el de su hijo.
+   * El tutor no participa de esta vinculación.
+   */
   register(data: Partial<UserProfile>): Observable<UserProfile> {
     const role = data.role ?? 'estudiante';
     const base = demoBase(role);
@@ -84,6 +129,13 @@ export class SessionService {
       initials: this.initialsOf(name),
       interests: [],
     };
+    if (role === 'estudiante') {
+      student.childCode = generateLinkedCode();
+    } else if (role === 'padre' && student.childCode) {
+      student.childCode = normalizeLinkedCode(student.childCode);
+    } else {
+      delete student.childCode;
+    }
     return of(student).pipe(delay(1400));
   }
 
@@ -103,6 +155,24 @@ export class SessionService {
       }, 1100);
       return () => clearTimeout(timer);
     });
+  }
+
+  /**
+   * Guarda o limpia el código de vinculación del hijo.
+   *
+   * El perfil del padre es el dueño de la cuenta, así que es ahí donde vive el
+   * vínculo: `null` lo deja como "sin hijo vinculado" y el panel familiar pasa
+   * a pedir un código en vez de mostrar datos de un menor.
+   */
+  setChildCode(code: string | null): void {
+    this._student.update((s) => {
+      if (!s) return s;
+      const next = { ...s };
+      if (code) next.childCode = code.trim().toUpperCase();
+      else delete next.childCode;
+      return next;
+    });
+    this.persist();
   }
 
   /** Edita los datos personales del perfil (nombre, edad, institución, grado). */
@@ -166,12 +236,33 @@ export class SessionService {
       if (data?.student) {
         // Sesiones guardadas antes del soporte de roles: se asume estudiante.
         const student: UserProfile = { ...data.student, role: data.student.role ?? 'estudiante' };
+        // Una cuenta de estudiante creada antes de que existiera el código se
+        // queda sin él, y su perfil no tendría nada que mostrar. Se le emite
+        // uno al vuelo: es la misma cuenta con su código definitivo.
+        if (student.role === 'estudiante' && !student.childCode) {
+          student.childCode = generateLinkedCode();
+        }
         this._student.set(student);
-        this._bookings.set(data.bookings ?? []);
+        this._bookings.set((data.bookings ?? []).map((b) => this.normalizeBooking(b)));
       }
     } catch {
       /* dato corrupto o almacenamiento no disponible: se ignora */
     }
+  }
+
+  /**
+   * Las reservas guardadas antes de que existiera el hijo no traen `forName` ni
+   * `bookedByRole`. Se completan como sesiones propias de quien las agendó: es
+   * lo único que se puede afirmar sin inventar datos, y evita que una sesión
+   * vieja rompa la pantalla de confirmación al leer `forName`.
+   */
+  private normalizeBooking(booking: Booking): Booking {
+    const name = this._student()?.name ?? 'Estudiante';
+    return {
+      ...booking,
+      forName: booking.forName ?? name,
+      bookedByRole: booking.bookedByRole ?? 'estudiante',
+    };
   }
 
   /** Detecta el rol por el dominio del correo demo (@docente / @familia). */
