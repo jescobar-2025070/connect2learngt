@@ -4,7 +4,7 @@
  * Roles soportados por el prototipo. `estudiante` es el rol original y sigue
  * siendo el valor por defecto para las sesiones ya persistidas.
  */
-export type UserRole = 'estudiante' | 'tutor' | 'padre';
+export type UserRole = 'Estudiante' | 'Tutor' | 'Padre';
 
 /** Etiquetas y textos del selector de rol del registro. */
 export interface RoleOption {
@@ -22,7 +22,7 @@ export interface RoleOption {
 
 export const ROLE_OPTIONS: RoleOption[] = [
   {
-    id: 'estudiante',
+    id: 'Estudiante',
     label: 'Estudiante',
     tagline: 'Aprende, publica y participa en la comunidad',
     icon: 'profile',
@@ -32,7 +32,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     startRoute: '/app/inicio',
   },
   {
-    id: 'tutor',
+    id: 'Tutor',
     label: 'Maestro / Tutor',
     tagline: 'Da clases, gestiona tu agenda y mide tu reputación',
     icon: 'tutors',
@@ -42,7 +42,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     startRoute: '/app/inicio',
   },
   {
-    id: 'padre',
+    id: 'Padre',
     label: 'Padre de familia',
     tagline: 'Acompaña el progreso de tu hijo con un código',
     icon: 'shield',

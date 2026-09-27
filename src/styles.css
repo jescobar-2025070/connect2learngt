@@ -774,7 +774,9 @@ select.input option {
 .pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  width: fit-content;
   max-width: 100%;
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -784,9 +786,10 @@ select.input option {
   font-size: 0.75rem;
   font-weight: 650;
   line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  text-overflow: clip;
 }
 .pill.brand {
   background: var(--brand-soft);
@@ -2245,11 +2248,19 @@ select.input option {
 
 /* ---------- family supervision ---------- */
 .guardian-row {
+  display: flex;
   align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+  width: 100%;
 }
 .guardian-email,
 .guardian-since {
   display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .guardian-actions {
   display: flex;
@@ -2257,11 +2268,26 @@ select.input option {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
 }
+.guardian-actions .btn,
+.guardian-actions .pill,
 .inline-confirm {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.guardian-actions .btn {
+  flex: 0 1 auto;
+}
+.inline-confirm {
+  flex-wrap: wrap;
 }
 
 .invite-box {
@@ -2484,7 +2510,17 @@ select.input option {
   animation: toast-in var(--dur) var(--ease-out) both;
 }
 .toast.success {
-  border-left-color: var(--success);
+  /* 1. Fondo del color principal (--brand) con un 88% de transparencia */
+  background: color-mix(in srgb, var(--brand) 12%, transparent) !important;
+
+  /* 2. Blur fuerte, superior al --blur-md por defecto del sistema */
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+
+  /* 3. Elimina la línea lateral verde y aplica un borde fino, sutil y uniforme */
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: color-mix(in srgb, var(--brand) 25%, transparent) !important;
 }
 .toast.warning {
   border-left-color: var(--warning);
@@ -2492,10 +2528,8 @@ select.input option {
 .toast.error {
   border-left-color: var(--danger);
 }
-.toast app-icon:first-child {
-  color: var(--brand);
-  flex: none;
-  margin-top: 1px;
+.toast.success app-icon:first-child {
+  color: var(--brand) !important;
 }
 .toast.success app-icon:first-child {
   color: var(--success);

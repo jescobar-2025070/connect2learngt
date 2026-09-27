@@ -32,22 +32,22 @@ export type SectionKey =
 export const SECTION_ROLES: Record<SectionKey, readonly UserRole[]> = {
   // El onboarding elige qué aprendes o qué impartes: el padre no estudia para sí
   // mismo, se vincula a su hijo con un código.
-  intereses: ['estudiante', 'tutor'],
+  intereses: ['Estudiante', 'Tutor'],
   // El panel personal es del estudiante y del docente. El padre no tiene
   // actividad propia que ver: su panel es el de su hijo (`familia`).
-  inicio: ['estudiante', 'tutor'],
+  inicio: ['Estudiante', 'Tutor'],
   // El padre entra para agendar sesiones a nombre del hijo, nunca para sí
   // mismo: la reserva se atribuye al hijo vinculado (`Booking.forChildId`).
-  tutores: ['estudiante', 'tutor', 'padre'],
+  tutores: ['Estudiante', 'Tutor', 'Padre'],
   // Solo lectura para el padre: sin compositor, sin "me gusta", sin respuestas.
-  comunidad: ['estudiante', 'tutor', 'padre'],
+  comunidad: ['Estudiante', 'Tutor', 'Padre'],
   // El padre descarga los materiales del hijo, pero no publica recursos.
-  recursos: ['estudiante', 'tutor', 'padre'],
-  grupos: ['estudiante', 'tutor'],
-  mensajes: ['estudiante', 'tutor'],
-  reputacion: ['estudiante', 'tutor'],
-  familia: ['estudiante', 'padre'],
-  perfil: ['estudiante', 'tutor', 'padre'],
+  recursos: ['Estudiante', 'Tutor', 'Padre'],
+  grupos: ['Estudiante', 'Tutor'],
+  mensajes: ['Estudiante', 'Tutor'],
+  reputacion: ['Estudiante', 'Tutor'],
+  familia: ['Estudiante', 'Padre'],
+  perfil: ['Estudiante', 'Tutor', 'Padre'],
 };
 
 /** Qué puede hacer un rol dentro de la aplicación. */
@@ -82,9 +82,9 @@ const FULL: Capabilities = {
 };
 
 export const ROLE_CAPABILITIES: Record<UserRole, Capabilities> = {
-  estudiante: { ...FULL },
-  tutor: { ...FULL },
-  padre: {
+  'Estudiante': { ...FULL },
+  'Tutor': { ...FULL },
+  'Padre': {
     publish: false,
     upload: false,
     chat: false,

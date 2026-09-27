@@ -15,13 +15,13 @@ import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
 const GOOGLE_PROFILE: Record<UserRole, { name: string; email: string; age: number }> = {
-  estudiante: {
+  Estudiante: {
     name: 'Camila Rojas',
     email: 'camila.rojas@gmail.com',
     age: 17,
   },
-  tutor: { name: 'Miguel Torres', email: 'miguel.torres@gmail.com', age: 34 },
-  padre: { name: 'Patricia Vega', email: 'patricia.vega@gmail.com', age: 44 },
+  Tutor: { name: 'Miguel Torres', email: 'miguel.torres@gmail.com', age: 34 },
+  Padre: { name: 'Patricia Vega', email: 'patricia.vega@gmail.com', age: 44 },
 };
 
 @Component({
@@ -38,7 +38,7 @@ export class RegisterPage {
 
   readonly roles = ROLE_OPTIONS;
   /** Signal (no campo simple): los computed de abajo dependen de él. */
-  readonly role = signal<UserRole>('estudiante');
+  readonly role = signal<UserRole>('Estudiante');
 
   name = '';
   email = '';
@@ -54,8 +54,8 @@ export class RegisterPage {
   readonly submitted = signal(false);
 
   readonly roleInfo = computed<RoleOption>(() => roleOption(this.role()));
-  readonly isParent = computed(() => this.role() === 'padre');
-  readonly isTutor = computed(() => this.role() === 'tutor');
+  readonly isParent = computed(() => this.role() === 'Padre');
+  readonly isTutor = computed(() => this.role() === 'Tutor');
   /**
    * `min` del input de edad. Con `ageMin: null` (docente) el atributo se
    * omite: escribir 0 en el DOM haría el campo inválido para el navegador.

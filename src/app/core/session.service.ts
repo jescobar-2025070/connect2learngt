@@ -33,8 +33,8 @@ interface PersistedSession {
 
 /** Perfil demo que corresponde a cada rol, usado como base del registro. */
 function demoBase(role: UserRole): UserProfile {
-  if (role === 'tutor') return DEMO_TUTOR;
-  if (role === 'padre') return DEMO_PARENT;
+  if (role === 'Tutor') return DEMO_TUTOR;
+  if (role === 'Padre') return DEMO_PARENT;
   return DEMO_STUDENT;
 }
 
@@ -60,10 +60,10 @@ export class SessionService {
   readonly nextBooking = computed<Booking | null>(() => this._bookings()[0] ?? null);
 
   /** Rol de la sesión activa; `estudiante` si aún no hay sesión o es antigua. */
-  readonly role = computed<UserRole>(() => this._student()?.role ?? 'estudiante');
-  readonly isStudent = computed(() => this.role() === 'estudiante');
-  readonly isTutor = computed(() => this.role() === 'tutor');
-  readonly isParent = computed(() => this.role() === 'padre');
+  readonly role = computed<UserRole>(() => this._student()?.role ?? 'Estudiante');
+  readonly isStudent = computed(() => this.role() === 'Estudiante');
+  readonly isTutor = computed(() => this.role() === 'Tutor');
+  readonly isParent = computed(() => this.role() === 'Padre');
 
   /**
    * Código de vinculación de la cuenta activa. Solo el estudiante lo tiene: es
@@ -121,7 +121,7 @@ export class SessionService {
    * El tutor no participa de esta vinculación.
    */
   register(data: Partial<UserProfile>): Observable<UserProfile> {
-    const role = data.role ?? 'estudiante';
+    const role = data.role ?? 'Estudiante';
     const base = demoBase(role);
     const name = data.name?.trim() || base.name;
     const student: UserProfile = {
@@ -132,10 +132,10 @@ export class SessionService {
       initials: this.initialsOf(name),
       interests: [],
     };
-    if (role === 'estudiante') {
+    if (role === 'Estudiante') {
       student.childCode = generateLinkedCode();
       delete student.linkedChildCodes;
-    } else if (role === 'padre' && data.childCode) {
+    } else if (role === 'Padre' && data.childCode) {
       // El padre entra con el código de su primer hijo ya vinculado; los demás
       // los añade después desde el panel.
       student.linkedChildCodes = [normalizeLinkedCode(data.childCode)];
@@ -262,12 +262,12 @@ export class SessionService {
         // Una cuenta de estudiante creada antes de que existiera el código se
         // queda sin él, y su perfil no tendría nada que mostrar. Se le emite
         // uno al vuelo: es la misma cuenta con su código definitivo.
-        if (student.role === 'estudiante' && !student.childCode) {
+        if (student.role === 'Estudiante' && !student.childCode) {
           student.childCode = generateLinkedCode();
         }
         // El padre antes guardaba un único `childCode`. Ese vínculo no se
         // pierde: se traslada a la lista, y a partir de ahí conviven varios.
-        if (student.role === 'padre' && student.childCode) {
+        if (student.role === 'Padre' && student.childCode) {
           const previous = normalizeLinkedCode(student.childCode);
           student.linkedChildCodes = [previous, ...(student.linkedChildCodes ?? [])].filter(
             (code, i, all) => all.indexOf(code) === i,
@@ -300,9 +300,9 @@ export class SessionService {
   /** Detecta el rol por el dominio del correo demo (@docente / @familia). */
   private roleFromEmail(email: string): UserRole {
     const domain = email.split('@')[1]?.toLowerCase() ?? '';
-    if (domain.includes('docente') || domain.includes('tutor')) return 'tutor';
-    if (domain.includes('familia') || domain.includes('padre')) return 'padre';
-    return 'estudiante';
+    if (domain.includes('docente') || domain.includes('Tutor')) return 'Tutor';
+    if (domain.includes('familia') || domain.includes('Padre')) return 'Padre';
+    return 'Estudiante';
   }
 
   private nameFromEmail(email: string): string {

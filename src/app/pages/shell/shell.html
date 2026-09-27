@@ -8,10 +8,9 @@
     [class.open]="menuOpen()"
   >
     <a class="brand" [routerLink]="startRoute()" (click)="closeMenu()">
-      <app-icon name="resources" [size]="19" />
       <span>CONNECT2LEARN</span>
     </a>
-    <p class="brand-sub">Ecosistema educativo</p>
+    <p class="brand-sub">Conecta, Aprende y Crece</p>
 
     <nav class="nav" aria-label="Navegación principal">
       @for (item of navItems(); track item.path) {

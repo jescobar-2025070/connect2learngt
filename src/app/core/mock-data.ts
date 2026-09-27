@@ -42,7 +42,7 @@ export const INTEREST_TOPICS: string[] = [
 
 export const DEMO_STUDENT: UserProfile = {
   id: 'stu-001',
-  role: 'estudiante',
+  role: 'Estudiante',
   name: 'Alex Rivera',
   email: 'alex.rivera@estudiante.edu',
   age: 17,
@@ -61,7 +61,7 @@ export const DEMO_STUDENT: UserProfile = {
 /** Perfil base de la demo docente: mismas reglas, datos de maestro/tutor. */
 export const DEMO_TUTOR: UserProfile = {
   id: 'tut-901',
-  role: 'tutor',
+  role: 'Tutor',
   name: 'Laura Gómez',
   email: 'laura.gomez@docente.edu',
   age: 34,
@@ -81,7 +81,7 @@ export const DEMO_TUTOR: UserProfile = {
  */
 export const DEMO_PARENT: UserProfile = {
   id: 'par-001',
-  role: 'padre',
+  role: 'Padre',
   name: 'Jorge Rivera',
   email: 'jorge.rivera@familia.com',
   age: 45,
@@ -1052,7 +1052,7 @@ export const CHILD_SESSIONS: Booking[] = [
     goal: 'Repasar integral por partes antes del parcial',
     forName: DEMO_STUDENT.name,
     forChildId: 'child-001',
-    bookedByRole: 'estudiante',
+    bookedByRole: 'Estudiante',
   },
   {
     id: 'bk-child-002',
@@ -1065,7 +1065,7 @@ export const CHILD_SESSIONS: Booking[] = [
     goal: 'Práctica de writing para el examen de Cambridge',
     forName: DEMO_STUDENT.name,
     forChildId: 'child-001',
-    bookedByRole: 'padre',
+    bookedByRole: 'Padre',
   },
 ];
 
@@ -1213,7 +1213,7 @@ export function synthSessionsForChild(child: ChildAccount): Booking[] {
       goal: 'Repasar los ejercicios de la última semana',
       forName: child.name,
       forChildId: child.id,
-      bookedByRole: 'estudiante',
+      bookedByRole: 'Estudiante',
     },
     {
       id: `${child.id}-bk-2`,
@@ -1228,7 +1228,7 @@ export function synthSessionsForChild(child: ChildAccount): Booking[] {
       goal: 'Preparar el examen de la unidad',
       forName: child.name,
       forChildId: child.id,
-      bookedByRole: 'padre',
+      bookedByRole: 'Padre',
     },
   ];
 }

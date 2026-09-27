@@ -91,7 +91,7 @@ export class ChildPanelComponent {
 
   /** Quién agendó cada sesión, para que el padre distinga lo suyo de lo del hijo. */
   bookedByLabel(booking: Booking): string {
-    return booking.bookedByRole === 'padre' ? 'La agendaste tú' : 'La agendó el estudiante';
+    return booking.bookedByRole === 'Padre' ? 'La agendaste tú' : 'La agendó el estudiante';
   }
 
   private loadChildren(): void {
