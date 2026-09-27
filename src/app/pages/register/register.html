@@ -94,17 +94,17 @@
         }
       </div>
 
-      <div class="grid two-col">
+      @if (isParent()) {
         <div class="field">
           <label for="age">Edad</label>
           <input
             id="age"
             name="age"
             type="number"
-            [min]="roleInfo().ageMin"
+            [min]="ageMinAttr()"
             [max]="roleInfo().ageMax"
             class="input"
-            [placeholder]="isParent() ? '44' : isTutor() ? '34' : '17'"
+            placeholder="44"
             [(ngModel)]="age"
             [attr.aria-invalid]="ageInvalid"
             [attr.aria-describedby]="ageInvalid ? 'age-error' : null"
@@ -115,32 +115,7 @@
             <p class="hint">{{ ageHint }}</p>
           }
         </div>
-        <div class="field">
-          <label for="grade">{{ gradeLabel() }}</label>
-          <input
-            id="grade"
-            name="grade"
-            class="input"
-            [placeholder]="gradePlaceholder()"
-            [(ngModel)]="grade"
-          />
-        </div>
-      </div>
 
-      <div class="field">
-        <label for="institution">Institución</label>
-        <input
-          id="institution"
-          name="institution"
-          class="input"
-          [placeholder]="
-            isParent() ? 'Institución donde estudia tu hijo' : 'Nombre de tu colegio o universidad'
-          "
-          [(ngModel)]="institution"
-        />
-      </div>
-
-      @if (isParent()) {
         <div class="field">
           <label for="childCode">Código de vinculación de tu hijo</label>
           <input
@@ -162,6 +137,50 @@
               Tu hijo lo encuentra en Perfil → Código de vinculación.
             </p>
           }
+        </div>
+      } @else {
+        <div class="grid two-col">
+          <div class="field">
+            <label for="age">Edad</label>
+            <input
+              id="age"
+              name="age"
+              type="number"
+              [min]="ageMinAttr()"
+              [max]="roleInfo().ageMax"
+              class="input"
+              [placeholder]="isTutor() ? '34' : '17'"
+              [(ngModel)]="age"
+              [attr.aria-invalid]="ageInvalid"
+              [attr.aria-describedby]="ageInvalid ? 'age-error' : null"
+            />
+            @if (ageInvalid) {
+              <p class="field-error" id="age-error">{{ ageHint }}</p>
+            } @else {
+              <p class="hint">{{ ageHint }}</p>
+            }
+          </div>
+          <div class="field">
+            <label for="grade">{{ gradeLabel() }}</label>
+            <input
+              id="grade"
+              name="grade"
+              class="input"
+              [placeholder]="gradePlaceholder()"
+              [(ngModel)]="grade"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="institution">Institución</label>
+          <input
+            id="institution"
+            name="institution"
+            class="input"
+            placeholder="Nombre de tu colegio o universidad"
+            [(ngModel)]="institution"
+          />
         </div>
       }
 

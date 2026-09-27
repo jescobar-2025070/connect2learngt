@@ -27,11 +27,11 @@
         </div>
         <div>
           <span class="mini muted">Institución</span>
-          <strong>{{ s.institution }}</strong>
+          <strong>{{ s.institution || 'No indicada' }}</strong>
         </div>
         <div>
-          <span class="mini muted">Grado / curso</span>
-          <strong>{{ s.grade }}</strong>
+          <span class="mini muted">{{ gradeLabel() }}</span>
+          <strong>{{ s.grade || 'Sin definir' }}</strong>
         </div>
         <div>
           <span class="mini muted">Miembro desde</span>

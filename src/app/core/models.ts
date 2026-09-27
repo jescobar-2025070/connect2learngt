@@ -12,7 +12,8 @@ export interface RoleOption {
   label: string;
   tagline: string;
   icon: string;
-  ageMin: number;
+  /** `null` = sin edad mínima (el docente puede empezar a enseñar adulto). */
+  ageMin: number | null;
   ageMax: number;
   /** El padre se vincula a un hijo con un código: no elige intereses propios. */
   onboarding: 'intereses' | 'materias' | 'vinculacion';
@@ -35,8 +36,8 @@ export const ROLE_OPTIONS: RoleOption[] = [
     label: 'Maestro / Tutor',
     tagline: 'Da clases, gestiona tu agenda y mide tu reputación',
     icon: 'tutors',
-    ageMin: 18,
-    ageMax: 80,
+    ageMin: null,
+    ageMax: 100,
     onboarding: 'materias',
     startRoute: '/app/inicio',
   },
@@ -45,8 +46,8 @@ export const ROLE_OPTIONS: RoleOption[] = [
     label: 'Padre de familia',
     tagline: 'Acompaña el progreso de tu hijo con un código',
     icon: 'shield',
-    ageMin: 18,
-    ageMax: 80,
+    ageMin: null,
+    ageMax: 100,
     onboarding: 'vinculacion',
     startRoute: '/app/familia',
   },

@@ -63,15 +63,18 @@ export const DEMO_TUTOR: UserProfile = {
   initials: 'LG',
 };
 
-/** Perfil base de la demo de familia: viene con un hijo ya vinculado. */
+/**
+ * Perfil base de la demo de familia: el padre no declara institución ni grado
+ * (esos datos son del hijo), solo su vínculo.
+ */
 export const DEMO_PARENT: UserProfile = {
   id: 'par-001',
   role: 'padre',
   name: 'Jorge Rivera',
   email: 'jorge.rivera@familia.com',
   age: 45,
-  institution: 'Colegio San Marcos',
-  grade: 'Padre de Alex Rivera',
+  institution: '',
+  grade: '',
   interests: [],
   initials: 'JR',
   childCode: 'C2L-4F7K-2Q',

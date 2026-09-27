@@ -47,6 +47,11 @@ export class RegisterPage {
   readonly roleInfo = computed<RoleOption>(() => roleOption(this.role()));
   readonly isParent = computed(() => this.role() === 'padre');
   readonly isTutor = computed(() => this.role() === 'tutor');
+  /**
+   * `min` del input de edad. Con `ageMin: null` (docente) el atributo se
+   * omite: escribir 0 en el DOM haría el campo inválido para el navegador.
+   */
+  readonly ageMinAttr = computed<number | null>(() => this.roleInfo().ageMin);
   /** El docente informa la materia que más imparte en lugar del grado. */
   readonly gradeLabel = computed(() => (this.isTutor() ? 'Materia principal' : 'Grado / curso'));
   readonly gradePlaceholder = computed(() =>
@@ -75,14 +80,16 @@ export class RegisterPage {
   }
   get ageInvalid(): boolean {
     if (!this.submitted()) return false;
+    if (this.age == null) return true;
     const { ageMin, ageMax } = this.roleInfo();
-    return this.age == null || this.age < ageMin || this.age > ageMax;
+    if (ageMin != null && this.age < ageMin) return true;
+    return this.age > ageMax;
   }
   get ageHint(): string {
     const { ageMin, ageMax } = this.roleInfo();
-    return this.isParent()
-      ? 'Tu edad nos ayuda a proteger la cuenta de tu hijo.'
-      : `La edad mínima para este rol es de ${ageMin} años.`;
+    if (this.isParent()) return 'Tu edad nos ayuda a proteger la cuenta de tu hijo.';
+    if (ageMin == null) return `Docentes de cualquier edad, hasta los ${ageMax} años.`;
+    return `La edad mínima para este rol es de ${ageMin} años.`;
   }
   get childCodeInvalid(): boolean {
     return this.submitted() && this.isParent() && !/^[A-Za-z0-9-]{6,}$/.test(this.childCode.trim());
@@ -112,15 +119,17 @@ export class RegisterPage {
     }
 
     this.loading.set(true);
-    const { ageMin } = this.roleInfo();
+    const fallbackAge = this.roleInfo().ageMin ?? 18;
     this.session
       .register({
         role: this.role(),
         name: this.name.trim(),
         email: this.email.trim(),
-        age: this.age ?? ageMin,
-        institution: this.institution.trim() || 'Sin especificar',
-        grade: this.grade.trim() || this.defaultGrade(),
+        age: this.age ?? fallbackAge,
+        // El padre solo aporta sus datos y el código: institution y grade
+        // describen al hijo, no a él, así que no se preguntan.
+        institution: this.isParent() ? '' : this.institution.trim() || 'Sin especificar',
+        grade: this.isParent() ? '' : this.grade.trim() || this.defaultGrade(),
         childCode: this.isParent() ? this.childCode.trim().toUpperCase() : undefined,
       })
       .subscribe((profile) => {
@@ -136,7 +145,6 @@ export class RegisterPage {
   /** Valor por defecto del campo "grado / materia" según el rol. */
   private defaultGrade(): string {
     if (this.isTutor()) return 'Materia por definir';
-    if (this.isParent()) return 'Padre de familia';
     return 'Sin especificar';
   }
 
@@ -151,8 +159,9 @@ export class RegisterPage {
       this.email = profile.email;
       this.password = 'google-secreto';
       this.age = profile.age;
-      this.institution = 'Colegio San Marcos';
-      this.grade = this.isTutor() ? 'Matemáticas' : '5to Bachillerato';
+      // El padre no tiene institución ni grado en el formulario.
+      this.institution = this.isParent() ? '' : 'Colegio San Marcos';
+      this.grade = this.isParent() ? '' : this.isTutor() ? 'Matemáticas' : '5to Bachillerato';
       this.childCode = this.isParent() ? 'C2L-4F7K-2Q' : '';
       this.terms = true;
       this.toast.success(`Cuenta de Google de ${profile.name} seleccionada.`);
