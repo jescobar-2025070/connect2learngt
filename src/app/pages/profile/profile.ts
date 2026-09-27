@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/session.service';
@@ -24,6 +24,11 @@ export class ProfilePage {
   private readonly toast = inject(ToastService);
 
   readonly student = this.session.student;
+
+  /** El docente edita su materia principal; el estudiante, su grado. */
+  readonly gradeLabel = computed(() =>
+    this.session.isTutor() ? 'Materia principal' : 'Grado / curso',
+  );
 
   // Editar información personal
   readonly showEdit = signal(false);

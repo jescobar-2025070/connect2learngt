@@ -1,7 +1,7 @@
 <div class="topbar">
   <div class="page-head">
-    <h1>Supervisión familiar</h1>
-    <p class="muted mt-0">Controla qué comparte tu cuenta con tus padres o tutores.</p>
+    <h1>{{ pageTitle() }}</h1>
+    <p class="muted mt-0">{{ pageSubtitle() }}</p>
   </div>
   <div class="top-actions">
     <app-theme-toggle />
@@ -24,15 +24,14 @@
 } @else {
   <div class="grid">
     <section class="card c7" aria-labelledby="guardians-title">
-      <h2 id="guardians-title">Familiares vinculados</h2>
+      <h2 id="guardians-title">{{ listTitle() }}</h2>
       <p class="muted mini">
-        Las personas vinculadas pueden ver la información que actives en "Qué compartimos", a la
-        derecha.
+        {{ listHint() }}
       </p>
 
       @if (guardians().length === 0) {
         <div class="empty" style="margin-top: 12px">
-          Aún no tienes familiares vinculados. Invita a tu padre, madre o tutor abajo.
+          {{ emptyHint() }}
         </div>
       } @else {
         @for (g of guardians(); track g.id) {
@@ -83,14 +82,16 @@
       }
 
       <div class="invite-box">
-        <label for="inviteEmail">Invitar a un familiar por correo</label>
+        <label for="inviteEmail">
+          {{ isParent() ? 'Vincular a un hijo por correo' : 'Invitar a un familiar por correo' }}
+        </label>
         <form class="invite-form" (ngSubmit)="invite()">
           <input
             id="inviteEmail"
             name="inviteEmail"
             type="email"
             class="input"
-            placeholder="familiar@correo.com"
+            [placeholder]="isParent() ? 'hijo@correo.com' : 'familiar@correo.com'"
             [(ngModel)]="inviteEmail"
             [attr.aria-invalid]="!!inviteError()"
             [attr.aria-describedby]="inviteError() ? 'invite-error' : null"

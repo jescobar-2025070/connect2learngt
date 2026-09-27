@@ -5,12 +5,9 @@
 
   <div class="onboarding">
     <div class="center-text">
-      <p class="step-label">Paso 2 de 2</p>
-      <h1>¿Qué te interesa aprender?</h1>
-      <p class="muted">
-        Elige al menos {{ minInterests }} temas. Con esto personalizamos tus recursos, tutores y
-        publicaciones recomendadas.
-      </p>
+      <p class="step-label">{{ stepLabel() }}</p>
+      <h1>{{ title() }}</h1>
+      <p class="muted">{{ subtitle() }}</p>
     </div>
 
     <div class="card">
@@ -48,7 +45,7 @@
             <span class="spinner sm on-brand" aria-hidden="true"></span>
             <span>Guardando…</span>
           } @else {
-            <span>Continuar</span>
+            <span>{{ continueLabel() }}</span>
             <app-icon name="arrowRight" [size]="17" />
           }
         </button>

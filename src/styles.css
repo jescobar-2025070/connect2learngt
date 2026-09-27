@@ -740,6 +740,9 @@ select.input {
   flex-direction: column;
   gap: 8px;
 }
+.role-pill {
+  align-self: flex-start;
+}
 
 .content {
   margin-left: 246px;
@@ -922,6 +925,77 @@ select.input {
 .onboarding-actions {
   justify-content: space-between;
   margin-top: 20px;
+}
+
+/* ---------- selector de rol (registro) ---------- */
+.role-picker {
+  border: 0;
+  padding: 0;
+  margin: 0 0 6px;
+}
+.role-picker > legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 650;
+}
+.role-grid {
+  display: grid;
+  gap: 8px;
+}
+.role-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 12px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+.role-card:hover {
+  border-color: var(--line-strong);
+}
+.role-card.selected {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.role-ico {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--brand);
+}
+.role-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.role-check {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.code-input {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ---------- shell extras ---------- */

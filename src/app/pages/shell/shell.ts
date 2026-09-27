@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { UserRole, roleOption } from '../../core/models';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
@@ -9,7 +10,26 @@ interface NavItem {
   path: string;
   label: string;
   icon: string;
+  /** Roles que ven esta sección. Si se omite, es visible para todos. */
+  roles?: UserRole[];
 }
+
+const NAV_ITEMS: NavItem[] = [
+  { path: '/app/inicio', label: 'Inicio', icon: 'home' },
+  { path: '/app/tutores', label: 'Tutorías', icon: 'tutors', roles: ['estudiante'] },
+  { path: '/app/comunidad', label: 'Comunidad', icon: 'community' },
+  { path: '/app/recursos', label: 'Recursos', icon: 'resources' },
+  { path: '/app/grupos', label: 'Grupos de estudio', icon: 'users', roles: ['estudiante', 'tutor'] },
+  { path: '/app/mensajes', label: 'Mensajes', icon: 'messages' },
+  { path: '/app/reputacion', label: 'Reputación', icon: 'star', roles: ['estudiante', 'tutor'] },
+  {
+    path: '/app/familia',
+    label: 'Supervisión familiar',
+    icon: 'shield',
+    roles: ['estudiante', 'padre'],
+  },
+  { path: '/app/perfil', label: 'Mi perfil', icon: 'profile' },
+];
 
 @Component({
   selector: 'app-shell',
@@ -24,17 +44,13 @@ export class ShellPage {
   readonly student = this.session.student;
   readonly menuOpen = signal(false);
 
-  readonly navItems: NavItem[] = [
-    { path: '/app/inicio', label: 'Inicio', icon: 'home' },
-    { path: '/app/tutores', label: 'Tutorías', icon: 'tutors' },
-    { path: '/app/comunidad', label: 'Comunidad', icon: 'community' },
-    { path: '/app/recursos', label: 'Recursos', icon: 'resources' },
-    { path: '/app/grupos', label: 'Grupos de estudio', icon: 'users' },
-    { path: '/app/mensajes', label: 'Mensajes', icon: 'messages' },
-    { path: '/app/reputacion', label: 'Reputación', icon: 'star' },
-    { path: '/app/familia', label: 'Supervisión familiar', icon: 'shield' },
-    { path: '/app/perfil', label: 'Mi perfil', icon: 'profile' },
-  ];
+  readonly role = this.session.role;
+  readonly roleLabel = computed(() => roleOption(this.role()).label);
+
+  /** Solo se muestran las secciones permitidas para el rol activo. */
+  readonly navItems = computed(() =>
+    NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(this.role())),
+  );
 
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);

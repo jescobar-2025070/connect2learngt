@@ -11,7 +11,7 @@ import {
   ResourceItem,
   RewardEntry,
   SharingPreference,
-  StudentProfile,
+  UserProfile,
   StudyGroup,
   SubjectProgress,
   Tutor,
@@ -38,8 +38,9 @@ export const INTEREST_TOPICS: string[] = [
   'Música',
 ];
 
-export const DEMO_STUDENT: StudentProfile = {
+export const DEMO_STUDENT: UserProfile = {
   id: 'stu-001',
+  role: 'estudiante',
   name: 'Alex Rivera',
   email: 'alex.rivera@estudiante.edu',
   age: 17,
@@ -47,6 +48,33 @@ export const DEMO_STUDENT: StudentProfile = {
   grade: '5to Bachillerato',
   interests: [],
   initials: 'AR',
+};
+
+/** Perfil base de la demo docente: mismas reglas, datos de maestro/tutor. */
+export const DEMO_TUTOR: UserProfile = {
+  id: 'tut-901',
+  role: 'tutor',
+  name: 'Laura Gómez',
+  email: 'laura.gomez@docente.edu',
+  age: 34,
+  institution: 'Colegio San Marcos',
+  grade: 'Matemáticas',
+  interests: [],
+  initials: 'LG',
+};
+
+/** Perfil base de la demo de familia: viene con un hijo ya vinculado. */
+export const DEMO_PARENT: UserProfile = {
+  id: 'par-001',
+  role: 'padre',
+  name: 'Jorge Rivera',
+  email: 'jorge.rivera@familia.com',
+  age: 45,
+  institution: 'Colegio San Marcos',
+  grade: 'Padre de Alex Rivera',
+  interests: [],
+  initials: 'JR',
+  childCode: 'C2L-4F7K-2Q',
 };
 
 export const TUTORS: Tutor[] = [

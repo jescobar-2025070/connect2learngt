@@ -1,14 +1,75 @@
 /** Modelos de dominio del prototipo. Todos los datos son simulados. */
 
-export interface StudentProfile {
+/**
+ * Roles soportados por el prototipo. `estudiante` es el rol original y sigue
+ * siendo el valor por defecto para las sesiones ya persistidas.
+ */
+export type UserRole = 'estudiante' | 'tutor' | 'padre';
+
+/** Etiquetas y textos del selector de rol del registro. */
+export interface RoleOption {
+  id: UserRole;
+  label: string;
+  tagline: string;
+  icon: string;
+  ageMin: number;
+  ageMax: number;
+  /** El padre se vincula a un hijo con un código: no elige intereses propios. */
+  onboarding: 'intereses' | 'materias' | 'vinculacion';
+  startRoute: string;
+}
+
+export const ROLE_OPTIONS: RoleOption[] = [
+  {
+    id: 'estudiante',
+    label: 'Estudiante',
+    tagline: 'Aprende, publica y participa en la comunidad',
+    icon: 'profile',
+    ageMin: 15,
+    ageMax: 25,
+    onboarding: 'intereses',
+    startRoute: '/app/inicio',
+  },
+  {
+    id: 'tutor',
+    label: 'Maestro / Tutor',
+    tagline: 'Da clases, gestiona tu agenda y mide tu reputación',
+    icon: 'tutors',
+    ageMin: 18,
+    ageMax: 80,
+    onboarding: 'materias',
+    startRoute: '/app/inicio',
+  },
+  {
+    id: 'padre',
+    label: 'Padre de familia',
+    tagline: 'Acompaña el progreso de tu hijo con un código',
+    icon: 'shield',
+    ageMin: 18,
+    ageMax: 80,
+    onboarding: 'vinculacion',
+    startRoute: '/app/familia',
+  },
+];
+
+export function roleOption(role: UserRole): RoleOption {
+  return ROLE_OPTIONS.find((r) => r.id === role) ?? ROLE_OPTIONS[0];
+}
+
+export interface UserProfile {
   id: string;
+  role: UserRole;
   name: string;
   email: string;
   age: number;
   institution: string;
+  /** Grado/curso del estudiante; materia principal del docente. */
   grade: string;
+  /** Temas de interés (estudiante) o materias que imparte (docente). */
   interests: string[];
   initials: string;
+  /** Código de vinculación del hijo; solo para el rol padre. */
+  childCode?: string;
 }
 
 export interface Tutor {

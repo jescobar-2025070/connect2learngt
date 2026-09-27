@@ -22,8 +22,22 @@ export class InterestsPage {
   readonly minInterests = MIN_INTERESTS;
 
   readonly student = this.session.student;
+  readonly isTutor = this.session.isTutor;
   readonly canContinue = computed(() => this.selected().length >= MIN_INTERESTS);
   readonly remaining = computed(() => Math.max(0, MIN_INTERESTS - this.selected().length));
+
+  readonly title = computed(() =>
+    this.isTutor() ? '¿Qué materias impartes?' : '¿Qué te interesa aprender?',
+  );
+  readonly subtitle = computed(() =>
+    this.isTutor()
+      ? `Elige al menos ${MIN_INTERESTS} materias. Con esto activamos tu perfil de docente y te enviamos estudiantes que las necesitan.`
+      : `Elige al menos ${MIN_INTERESTS} temas. Con esto personalizamos tus recursos, tutores y publicaciones recomendadas.`,
+  );
+  readonly stepLabel = computed(() => (this.isTutor() ? 'Paso 2 de 2 · Docente' : 'Paso 2 de 2'));
+  readonly continueLabel = computed(() =>
+    this.isTutor() ? 'Publicar mi perfil' : 'Continuar',
+  );
 
   isSelected(topic: string): boolean {
     return this.selected().includes(topic);
@@ -40,7 +54,7 @@ export class InterestsPage {
     this.saving.set(true);
     this.session.saveInterests(this.selected()).subscribe(() => {
       this.saving.set(false);
-      this.router.navigate(['/app/inicio']);
+      this.router.navigate([this.session.startRoute()]);
     });
   }
 

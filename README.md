@@ -23,6 +23,25 @@ en `dist/connect2learn/browser`):
 npm run build
 ```
 
+## Roles y registro multi-rol
+
+El registro permite elegir uno de los **tres roles** del ecosistema. Cada rol
+cambia el formulario, el onboarding, la navegación y el copy de las pantallas:
+
+| Rol | Campos propios | Onboarding | Pantalla inicial | Secciones no visibles |
+| --- | --- | --- | --- | --- |
+| **Estudiante** | Edad (15-25), grado, institución | ≥3 temas de interés | `/app/inicio` | — |
+| **Maestro / Tutor** | Edad (18+), materia principal, institución | ≥3 materias que imparte | `/app/inicio` | Tutorías, Supervisión familiar |
+| **Padre de familia** | Código de vinculación del hijo | Ninguno (se vincula con el código) | `/app/familia` | Tutorías, Grupos, Reputación |
+
+- El selector de rol reutiliza el patrón `chip` / `aria-pressed` de las
+  pantallas existentes; los tres roles se declaran una sola vez en
+  `ROLE_OPTIONS` (`src/app/core/models.ts`), que también define el rango de
+  edad, el tipo de onboarding y la ruta de inicio de cada uno.
+- El rol se persiste en `sessionStorage` junto al resto de la sesión. Las
+  sesiones guardadas antes de este cambio se recuperan como `estudiante`.
+- El login deduce el rol por el dominio del correo demo (`@docente`, `@familia`).
+
 ## Cómo hacer la demo
 
 1. En **Login**, pulsa **"Entrar con la cuenta demo"** (no valida
@@ -43,6 +62,19 @@ npm run build
    simulada, el registro con Google y la edición del perfil.
    Todas estas funciones son **simuladas** (sin backend), igual que el
    resto del flujo.
+
+### Probar el registro por rol
+
+1. Entra en `/registro` y elige las tres tarjetas de rol: al cambiar de rol
+   se actualizan el título, el rango de edad, la etiqueta del campo de
+   grado/materia y aparecen los campos propios (materias para el docente,
+   código de vinculación para el padre).
+2. **Estudiante:** edad 15-25 → `/intereses` → `/app/inicio` con las 9
+   secciones en el menú.
+3. **Maestro / Tutor:** edad 18+ → `/intereses` con el texto "¿Qué materias
+   impartes?" → `/app/inicio` sin "Tutorías" ni "Supervisión familiar".
+4. **Padre de familia:** sin rango de edad, con código de vinculación →
+   entra directo a `/app/familia` ("Mis hijos"), sin pasar por intereses.
 
 ## Funciones simuladas añadidas en esta iteración
 

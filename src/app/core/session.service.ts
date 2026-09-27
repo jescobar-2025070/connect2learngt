@@ -1,13 +1,20 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, delay, of } from 'rxjs';
-import { DEMO_STUDENT } from './mock-data';
-import { Booking, StudentProfile } from './models';
+import { DEMO_PARENT, DEMO_STUDENT, DEMO_TUTOR } from './mock-data';
+import { Booking, UserProfile, UserRole, roleOption } from './models';
 
 const STORAGE_KEY = 'c2l-session';
 
 interface PersistedSession {
-  student: StudentProfile;
+  student: UserProfile;
   bookings: Booking[];
+}
+
+/** Perfil demo que corresponde a cada rol, usado como base del registro. */
+function demoBase(role: UserRole): UserProfile {
+  if (role === 'tutor') return DEMO_TUTOR;
+  if (role === 'padre') return DEMO_PARENT;
+  return DEMO_STUDENT;
 }
 
 /**
@@ -22,7 +29,7 @@ interface PersistedSession {
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly _student = signal<StudentProfile | null>(null);
+  private readonly _student = signal<UserProfile | null>(null);
   private readonly _bookings = signal<Booking[]>([]);
 
   readonly student = this._student.asReadonly();
@@ -31,15 +38,31 @@ export class SessionService {
   readonly hasInterests = computed(() => (this._student()?.interests.length ?? 0) > 0);
   readonly nextBooking = computed<Booking | null>(() => this._bookings()[0] ?? null);
 
+  /** Rol de la sesión activa; `estudiante` si aún no hay sesión o es antigua. */
+  readonly role = computed<UserRole>(() => this._student()?.role ?? 'estudiante');
+  readonly isStudent = computed(() => this.role() === 'estudiante');
+  readonly isTutor = computed(() => this.role() === 'tutor');
+  readonly isParent = computed(() => this.role() === 'padre');
+
+  /** Pantalla de inicio según el rol. */
+  readonly startRoute = computed(() => roleOption(this.role()).startRoute);
+
+  /**
+   * El padre se vincula a su hijo con un código, así que no pasa por el
+   * onboarding de intereses: puede entrar directo a su panel.
+   */
+  readonly needsOnboarding = computed(() => roleOption(this.role()).onboarding !== 'vinculacion');
+
   constructor() {
     this.restore();
   }
 
-  /** Login simulado (1–1.5 s de "red"). */
-  login(email: string): Observable<StudentProfile> {
+  /** Login simulado (1–1.5 s de "red"). El rol se deduce del correo demo. */
+  login(email: string): Observable<UserProfile> {
     const name = this.nameFromEmail(email);
-    const student: StudentProfile = {
-      ...DEMO_STUDENT,
+    const role = this.roleFromEmail(email);
+    const student: UserProfile = {
+      ...demoBase(role),
       email,
       name,
       initials: this.initialsOf(name),
@@ -48,12 +71,15 @@ export class SessionService {
     return of(student).pipe(delay(1200));
   }
 
-  /** Registro simulado: reutiliza los datos del formulario. */
-  register(data: Partial<StudentProfile>): Observable<StudentProfile> {
-    const name = data.name?.trim() || DEMO_STUDENT.name;
-    const student: StudentProfile = {
-      ...DEMO_STUDENT,
+  /** Registro simulado: reutiliza los datos del formulario y el rol elegido. */
+  register(data: Partial<UserProfile>): Observable<UserProfile> {
+    const role = data.role ?? 'estudiante';
+    const base = demoBase(role);
+    const name = data.name?.trim() || base.name;
+    const student: UserProfile = {
+      ...base,
       ...data,
+      role,
       name,
       initials: this.initialsOf(name),
       interests: [],
@@ -61,7 +87,7 @@ export class SessionService {
     return of(student).pipe(delay(1400));
   }
 
-  setStudent(student: StudentProfile): void {
+  setStudent(student: UserProfile): void {
     this._student.set(student);
     this.persist();
   }
@@ -80,8 +106,8 @@ export class SessionService {
   }
 
   /** Edita los datos personales del perfil (nombre, edad, institución, grado). */
-  updateProfile(data: Partial<StudentProfile>): Observable<StudentProfile> {
-    return new Observable<StudentProfile>((subscriber) => {
+  updateProfile(data: Partial<UserProfile>): Observable<UserProfile> {
+    return new Observable<UserProfile>((subscriber) => {
       const timer = setTimeout(() => {
         this._student.update((s) => {
           if (!s) return s;
@@ -138,12 +164,22 @@ export class SessionService {
       if (!raw) return;
       const data = JSON.parse(raw) as PersistedSession;
       if (data?.student) {
-        this._student.set(data.student);
+        // Sesiones guardadas antes del soporte de roles: se asume estudiante.
+        const student: UserProfile = { ...data.student, role: data.student.role ?? 'estudiante' };
+        this._student.set(student);
         this._bookings.set(data.bookings ?? []);
       }
     } catch {
       /* dato corrupto o almacenamiento no disponible: se ignora */
     }
+  }
+
+  /** Detecta el rol por el dominio del correo demo (@docente / @familia). */
+  private roleFromEmail(email: string): UserRole {
+    const domain = email.split('@')[1]?.toLowerCase() ?? '';
+    if (domain.includes('docente') || domain.includes('tutor')) return 'tutor';
+    if (domain.includes('familia') || domain.includes('padre')) return 'padre';
+    return 'estudiante';
   }
 
   private nameFromEmail(email: string): string {

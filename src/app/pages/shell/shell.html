@@ -9,7 +9,7 @@
     <p class="brand-sub">Ecosistema educativo</p>
 
     <nav class="nav" aria-label="Navegación principal">
-      @for (item of navItems; track item.path) {
+      @for (item of navItems(); track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
@@ -31,6 +31,7 @@
             <span class="mini muted">{{ s.grade }}</span>
           </span>
         </a>
+        <span class="pill brand role-pill">{{ roleLabel() }}</span>
       }
       <button type="button" class="btn ghost block" (click)="logout()">
         <app-icon name="logout" [size]="17" />

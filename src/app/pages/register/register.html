@@ -9,11 +9,38 @@
         <app-icon name="resources" [size]="18" />
         <span>CONNECT2LEARN</span>
       </p>
-      <h1>Crea tu cuenta de estudiante</h1>
-      <p class="muted">Participa, publica y aprende con tu comunidad.</p>
+      <h1>{{ title() }}</h1>
+      <p class="muted">{{ subtitle() }}</p>
     </div>
 
     <form (ngSubmit)="submit()" novalidate class="login-form">
+      <fieldset class="role-picker">
+        <legend class="mini muted">Quiero unirme como</legend>
+        <div class="role-grid" role="radiogroup" aria-label="Elige tu rol">
+          @for (option of roles; track option.id) {
+            <button
+              type="button"
+              class="role-card"
+              role="radio"
+              [attr.aria-checked]="role() === option.id"
+              [class.selected]="role() === option.id"
+              (click)="selectRole(option.id)"
+            >
+              <span class="role-ico"><app-icon [name]="option.icon" [size]="19" /></span>
+              <span class="role-body">
+                <strong>{{ option.label }}</strong>
+                <span class="mini muted">{{ option.tagline }}</span>
+              </span>
+              @if (role() === option.id) {
+                <span class="role-check" aria-hidden="true">
+                  <app-icon name="check" [size]="15" />
+                </span>
+              }
+            </button>
+          }
+        </div>
+      </fieldset>
+
       <div class="field">
         <label for="name">Nombre completo</label>
         <input
@@ -74,25 +101,27 @@
             id="age"
             name="age"
             type="number"
-            min="15"
-            max="25"
+            [min]="roleInfo().ageMin"
+            [max]="roleInfo().ageMax"
             class="input"
-            placeholder="17"
+            [placeholder]="isParent() ? '44' : isTutor() ? '34' : '17'"
             [(ngModel)]="age"
             [attr.aria-invalid]="ageInvalid"
             [attr.aria-describedby]="ageInvalid ? 'age-error' : null"
           />
           @if (ageInvalid) {
-            <p class="field-error" id="age-error">La plataforma es para estudiantes de 15 a 25 años.</p>
+            <p class="field-error" id="age-error">{{ ageHint }}</p>
+          } @else {
+            <p class="hint">{{ ageHint }}</p>
           }
         </div>
         <div class="field">
-          <label for="grade">Grado / curso</label>
+          <label for="grade">{{ gradeLabel() }}</label>
           <input
             id="grade"
             name="grade"
             class="input"
-            placeholder="Ej. 5to Bachillerato"
+            [placeholder]="gradePlaceholder()"
             [(ngModel)]="grade"
           />
         </div>
@@ -104,10 +133,37 @@
           id="institution"
           name="institution"
           class="input"
-          placeholder="Nombre de tu colegio o universidad"
+          [placeholder]="
+            isParent() ? 'Institución donde estudia tu hijo' : 'Nombre de tu colegio o universidad'
+          "
           [(ngModel)]="institution"
         />
       </div>
+
+      @if (isParent()) {
+        <div class="field">
+          <label for="childCode">Código de vinculación de tu hijo</label>
+          <input
+            id="childCode"
+            name="childCode"
+            class="input code-input"
+            autocomplete="off"
+            placeholder="Ej. C2L-4F7K-2Q"
+            [(ngModel)]="childCode"
+            [attr.aria-invalid]="childCodeInvalid"
+            [attr.aria-describedby]="childCodeInvalid ? 'child-code-error' : 'child-code-hint'"
+          />
+          @if (childCodeInvalid) {
+            <p class="field-error" id="child-code-error">
+              El código tiene al menos 6 caracteres. Pídeselo a tu hijo en su perfil.
+            </p>
+          } @else {
+            <p class="hint" id="child-code-hint">
+              Tu hijo lo encuentra en Perfil → Código de vinculación.
+            </p>
+          }
+        </div>
+      }
 
       <div class="field">
         <div class="checkbox-row">

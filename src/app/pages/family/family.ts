@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../core/catalog.service';
+import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { AccessEntry, Guardian, SharingPreference } from '../../core/models';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
@@ -15,8 +16,38 @@ import { IconComponent } from '../../shared/icon';
 export class FamilyPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
+  private readonly session = inject(SessionService);
+
+  /**
+   * La pantalla cambia de sentido según el rol: el estudiante vincula a sus
+   * tutores legales, el padre ve a los hijos que ya están vinculados a su cuenta.
+   */
+  readonly isParent = this.session.isParent;
+
+  readonly pageTitle = computed(() =>
+    this.isParent() ? 'Mis hijos' : 'Supervisión familiar',
+  );
+  readonly pageSubtitle = computed(() =>
+    this.isParent()
+      ? 'Acompaña el progreso de los menores vinculados a tu cuenta.'
+      : 'Controla qué comparte tu cuenta con tus padres o tutores.',
+  );
+  readonly listTitle = computed(() =>
+    this.isParent() ? 'Hijos vinculados' : 'Familiares vinculados',
+  );
+  readonly listHint = computed(() =>
+    this.isParent()
+      ? 'Cada hijo autoriza por separado qué información puedes ver desde aquí.'
+      : 'Las personas vinculadas pueden ver la información que actives en "Qué compartimos", a la derecha.',
+  );
+  readonly emptyHint = computed(() =>
+    this.isParent()
+      ? 'Aún no tienes hijos vinculados. Pide a tu hijo su código de vinculación e ingrésalo abajo.'
+      : 'Aún no tienes familiares vinculados. Invita a tu padre, madre o tutor abajo.',
+  );
 
   readonly guardians = signal<Guardian[]>([]);
+
   readonly preferences = signal<SharingPreference[]>([]);
   readonly loading = signal(true);
   readonly revokingId = signal<string | null>(null);
