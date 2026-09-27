@@ -1,6 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { ResourceItem } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
@@ -17,6 +19,7 @@ const TYPES = ['Todos', 'PDF', 'Video', 'Guía', 'Ejercicios'];
 export class ResourcesPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly types = TYPES;
   readonly activeType = signal('Todos');
@@ -54,10 +57,13 @@ export class ResourcesPage {
 
   private load(type: string): void {
     this.loading.set(true);
-    this.catalog.getResources(type).subscribe((list) => {
-      this.resources.set(list);
-      this.loading.set(false);
-    });
+    this.catalog
+      .getResources(type)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('recursos.listar', () => this.load(type)),
+      )
+      .subscribe((list) => this.resources.set(list));
   }
 
   openUpload(): void {
@@ -87,9 +93,12 @@ export class ResourcesPage {
         subject,
         description,
       })
+      .pipe(
+        finalize(() => this.uploading.set(false)),
+        this.errors.catch('recursos.subir', () => this.submitUpload()),
+      )
       .subscribe((created) => {
         this.resources.update((list) => [created, ...list]);
-        this.uploading.set(false);
         this.showUpload.set(false);
         this.toast.success('Recurso publicado. Ya está disponible en la biblioteca.');
       });
@@ -98,12 +107,17 @@ export class ResourcesPage {
   download(resource: ResourceItem): void {
     if (this.downloadingId()) return;
     this.downloadingId.set(resource.id);
-    this.catalog.downloadResource(resource.id).subscribe((updated) => {
-      if (!updated) return;
-      this.resources.update((list) => list.map((r) => (r.id === updated.id ? updated : r)));
-      this.downloadingId.set(null);
-      this.toast.success(`Descarga de "${updated.title}" iniciada.`);
-    });
+    this.catalog
+      .downloadResource(resource.id)
+      .pipe(
+        finalize(() => this.downloadingId.set(null)),
+        this.errors.catch('recursos.descargar', () => this.download(resource)),
+      )
+      .subscribe((updated) => {
+        if (!updated) return;
+        this.resources.update((list) => list.map((r) => (r.id === updated.id ? updated : r)));
+        this.toast.success(`Descarga de "${updated.title}" iniciada.`);
+      });
   }
 
   formatDownloads(count: number): string {

@@ -1,7 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { StudyGroup } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
@@ -24,6 +26,7 @@ const SUBJECTS = [
 export class GroupsPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly subjects = SUBJECTS;
   readonly activeSubject = signal('Todas');
@@ -46,21 +49,29 @@ export class GroupsPage {
 
   private load(subject: string): void {
     this.loading.set(true);
-    this.catalog.getStudyGroups(subject).subscribe((list) => {
-      this.groups.set(list);
-      this.loading.set(false);
-    });
+    this.catalog
+      .getStudyGroups(subject)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('grupos.listar', () => this.load(subject)),
+      )
+      .subscribe((list) => this.groups.set(list));
   }
 
   join(group: StudyGroup): void {
     this.joiningId.set(group.id);
-    this.catalog.joinGroup(group.id).subscribe((updated) => {
-      if (updated) {
-        this.groups.update((list) => list.map((g) => (g.id === updated.id ? updated : g)));
-        this.toast.success(`Te uniste a "${updated.name}".`);
-      }
-      this.joiningId.set(null);
-    });
+    this.catalog
+      .joinGroup(group.id)
+      .pipe(
+        finalize(() => this.joiningId.set(null)),
+        this.errors.catch('grupos.unirse', () => this.join(group)),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.groups.update((list) => list.map((g) => (g.id === updated.id ? updated : g)));
+          this.toast.success(`Te uniste a "${updated.name}".`);
+        }
+      });
   }
 
   toggleCreateForm(): void {
@@ -80,9 +91,12 @@ export class GroupsPage {
         description,
         isPrivate: this.newGroup.isPrivate,
       })
+      .pipe(
+        finalize(() => this.creating.set(false)),
+        this.errors.catch('grupos.crear', () => this.createGroup()),
+      )
       .subscribe((group) => {
         this.groups.update((list) => [group, ...list]);
-        this.creating.set(false);
         this.showCreateForm.set(false);
         this.newGroup = { name: '', subject: 'Matemáticas', description: '', isPrivate: false };
         this.toast.success(`Grupo "${group.name}" creado.`);

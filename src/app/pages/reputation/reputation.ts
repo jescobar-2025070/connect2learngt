@@ -1,7 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { Achievement, RewardEntry } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
@@ -39,6 +41,7 @@ const UNLOCK_STEPS: Record<string, TrackedStep[]> = {
 export class ReputationPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly achievements = signal<Achievement[]>([]);
   readonly rewards = signal<RewardEntry[]>([]);
@@ -60,16 +63,28 @@ export class ReputationPage {
       if (achievementsReady && rewardsReady) this.loading.set(false);
     };
 
-    this.catalog.getAchievements().subscribe((list) => {
-      this.achievements.set(list);
-      achievementsReady = true;
-      checkDone();
-    });
-    this.catalog.getRewards().subscribe((list) => {
-      this.rewards.set(list);
-      rewardsReady = true;
-      checkDone();
-    });
+    // Igual que en Supervisión familiar: `finalize` marca cada lista como
+    // recibida aunque falle, para que el indicador se apague siempre.
+    this.catalog
+      .getAchievements()
+      .pipe(
+        finalize(() => {
+          achievementsReady = true;
+          checkDone();
+        }),
+        this.errors.catch('reputacion.logros'),
+      )
+      .subscribe((list) => this.achievements.set(list));
+    this.catalog
+      .getRewards()
+      .pipe(
+        finalize(() => {
+          rewardsReady = true;
+          checkDone();
+        }),
+        this.errors.catch('reputacion.premios'),
+      )
+      .subscribe((list) => this.rewards.set(list));
   }
 
   stepsOf(ach: Achievement): TrackedStep[] {

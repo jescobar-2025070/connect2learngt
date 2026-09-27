@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { CommunityPost, CommunityReply } from '../../core/models';
@@ -19,6 +21,7 @@ export class CommunityPage {
   private readonly catalog = inject(CatalogService);
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly student = this.session.student;
   readonly posts = signal<CommunityPost[]>([]);
@@ -53,10 +56,13 @@ export class CommunityPage {
 
   load(): void {
     this.loading.set(true);
-    this.catalog.getPosts().subscribe((posts) => {
-      this.posts.set(posts);
-      this.loading.set(false);
-    });
+    this.catalog
+      .getPosts()
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('comunidad.listar', () => this.load()),
+      )
+      .subscribe((posts) => this.posts.set(posts));
   }
 
   setFilter(value: 'recent' | 'mine'): void {
@@ -87,12 +93,17 @@ export class CommunityPage {
       replies: 0,
     };
 
-    this.catalog.addPost(newPost).subscribe(() => {
-      this.posts.update((list) => [newPost, ...list]);
-      this.draft = '';
-      this.posting.set(false);
-      this.toast.success('Tu publicación ya es visible para la comunidad.');
-    });
+    this.catalog
+      .addPost(newPost)
+      .pipe(
+        finalize(() => this.posting.set(false)),
+        this.errors.catch('comunidad.publicar', () => this.publish()),
+      )
+      .subscribe(() => {
+        this.posts.update((list) => [newPost, ...list]);
+        this.draft = '';
+        this.toast.success('Tu publicación ya es visible para la comunidad.');
+      });
   }
 
   toggleLike(post: CommunityPost): void {
@@ -127,10 +138,15 @@ export class CommunityPage {
     open.add(post.id);
     this.openReplies.set(open);
     this.loadingReplies.set(post.id);
-    this.catalog.getPostReplies(post.id).subscribe((list) => {
-      this.repliesByPost.update((map) => ({ ...map, [post.id]: list }));
-      this.loadingReplies.set(null);
-    });
+    // Sin acción de reintento: `toggleReplies` alterna abrir/cerrar, así que
+    // reutilizarla cerraría el hilo en vez de reintentar la carga.
+    this.catalog
+      .getPostReplies(post.id)
+      .pipe(
+        finalize(() => this.loadingReplies.set(null)),
+        this.errors.catch('comunidad.respuestas'),
+      )
+      .subscribe((list) => this.repliesByPost.update((map) => ({ ...map, [post.id]: list })));
   }
 
   sendReply(post: CommunityPost): void {
@@ -145,13 +161,16 @@ export class CommunityPage {
         initials: student?.initials ?? 'TU',
         text,
       })
+      .pipe(
+        finalize(() => this.replyingPostId.set(null)),
+        this.errors.catch('comunidad.responder', () => this.sendReply(post)),
+      )
       .subscribe((reply) => {
         this.repliesByPost.update((map) => ({ ...map, [post.id]: [...(map[post.id] ?? []), reply] }));
         this.replyDrafts[post.id] = '';
         this.posts.update((list) =>
           list.map((p) => (p.id === post.id ? { ...p, replies: p.replies + 1 } : p)),
         );
-        this.replyingPostId.set(null);
         this.toast.success('Tu respuesta se publicó en el hilo.');
       });
   }

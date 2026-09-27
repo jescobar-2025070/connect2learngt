@@ -1,0 +1,45 @@
+<!--
+  `role="main"` y `id="main"` solo se aplican en la variante a pantalla
+  completa: dentro del shell el elemento <main id="main"> ya existe y anidar
+  otro landmark main sería HTML inválido.
+-->
+<div
+  class="notfound"
+  [class.full]="!withShell"
+  [id]="!withShell ? 'main' : null"
+  [attr.role]="!withShell ? 'main' : null"
+>
+  @if (!withShell) {
+    <div class="auth-top">
+      <app-theme-toggle />
+    </div>
+  }
+
+  <div class="notfound-card card">
+    @if (!withShell) {
+      <p class="brand-mark">
+        <app-icon name="resources" [size]="18" />
+        <span>CONNECT2LEARN</span>
+      </p>
+    }
+
+    <span class="notfound-badge" aria-hidden="true">
+      <app-icon name="compass" [size]="30" />
+    </span>
+
+    <p class="notfound-code">Error 404</p>
+    <h1>Página no encontrada</h1>
+    <p class="muted notfound-text">
+      La dirección que abriste no existe o cambió de lugar. Revisa el enlace o vuelve a tu panel
+      para seguir donde estabas.
+    </p>
+
+    <div class="actions notfound-actions">
+      <a class="btn" [routerLink]="startRoute">Volver al inicio</a>
+      <button type="button" class="btn subtle" (click)="back()">
+        <app-icon name="arrowLeft" [size]="17" />
+        <span>Regresar</span>
+      </button>
+    </div>
+  </div>
+</div>

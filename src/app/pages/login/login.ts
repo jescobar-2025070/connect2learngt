@@ -1,6 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { EMPTY, catchError, finalize } from 'rxjs';
+import { ErrorCopyOverrides, UserErrorCopy } from '../../core/error-messages';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
@@ -9,6 +12,23 @@ import { ModalComponent } from '../../shared/modal';
 
 /** Cuenta simulada de Google de la demo. */
 const GOOGLE_ACCOUNT = 'alex.rivera@gmail.com';
+
+/**
+ * En el formulario de acceso, un fallo de autenticación o de validación no es
+ * "tu sesión expiró" (todavía no hay sesión): el texto tiene que hablar de
+ * credenciales. Los fallos de red o de servidor sí usan el texto centralizado.
+ */
+const LOGIN_FAILURE: UserErrorCopy = {
+  kind: 'auth',
+  title: 'No pudimos iniciar sesión',
+  detail: 'Revisa tu correo y tu contraseña e inténtalo de nuevo.',
+  retryable: true,
+};
+
+const LOGIN_OVERRIDES: ErrorCopyOverrides = {
+  auth: LOGIN_FAILURE,
+  validation: { ...LOGIN_FAILURE, kind: 'validation' },
+};
 
 @Component({
   selector: 'app-login',
@@ -19,6 +39,7 @@ export class LoginPage {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   email = '';
   password = '';
@@ -48,17 +69,22 @@ export class LoginPage {
     if (this.emailInvalid || this.passwordInvalid) return;
 
     this.loading.set(true);
-    this.session.login(this.email.trim()).subscribe({
-      next: (student) => {
+    this.session
+      .login(this.email.trim())
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        catchError((err: unknown) => {
+          // El aviso se pinta en el propio formulario (`error`), no como toast:
+          // `silent` deja la traza técnica en consola y evita el aviso duplicado.
+          const copy = this.errors.report(err, 'login', { silent: true, overrides: LOGIN_OVERRIDES });
+          this.error.set(copy.detail);
+          return EMPTY;
+        }),
+      )
+      .subscribe((student) => {
         this.session.setStudent(student);
-        this.loading.set(false);
         this.router.navigate(['/intereses']);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('No pudimos iniciar sesión. Inténtalo de nuevo.');
-      },
-    });
+      });
   }
 
   /** Atajo para la demo del pitch: entra sin escribir credenciales. */

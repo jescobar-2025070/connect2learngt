@@ -588,6 +588,11 @@ select.input {
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-lg);
 }
+/* Estados vacíos y de error con acciones (reintentar, volver). */
+.empty .actions {
+  justify-content: center;
+  margin-top: 18px;
+}
 
 /* ---------- loading ---------- */
 .spinner {
@@ -2096,6 +2101,69 @@ select.input {
 }
 .link-btn.sm {
   font-size: 0.8125rem;
+}
+
+/* ---------- 404 / error genérico ---------- */
+/* Misma receta que `.confirm-card` (reserva confirmada): badge circular,
+   encabezado, texto acotado y acciones centradas. */
+.notfound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 24px;
+}
+.notfound.full {
+  min-height: 100vh;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.notfound-card {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  padding: 34px 28px;
+}
+.notfound-badge {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.notfound-code {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin: 0 0 6px;
+}
+.notfound-card h1 {
+  margin-bottom: 8px;
+}
+.notfound-text {
+  max-width: 42ch;
+  margin: 0 auto;
+}
+.notfound-actions {
+  justify-content: center;
+  margin-top: 24px;
+}
+
+@media (max-width: 520px) {
+  .notfound-card {
+    padding: 26px 18px;
+  }
+  .notfound-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .notfound-actions .btn {
+    width: 100%;
+  }
 }
 
 /* ---------- iconos en cabeceras y filas (profesional) ---------- */

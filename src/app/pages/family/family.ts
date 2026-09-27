@@ -1,6 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { AccessEntry, Guardian, SharingPreference } from '../../core/models';
@@ -17,6 +19,7 @@ export class FamilyPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
   private readonly session = inject(SessionService);
+  private readonly errors = inject(ErrorService);
 
   /**
    * La pantalla cambia de sentido según el rol: el estudiante vincula a sus
@@ -70,25 +73,40 @@ export class FamilyPage {
       if (guardiansReady && prefsReady) this.loading.set(false);
     };
 
-    this.catalog.getGuardians().subscribe((list) => {
-      this.guardians.set(list);
-      guardiansReady = true;
-      checkDone();
-    });
-    this.catalog.getSharingPreferences().subscribe((list) => {
-      this.preferences.set(list);
-      prefsReady = true;
-      checkDone();
-    });
+    // Las dos listas se marcan como recibidas en `finalize` (no en `next`) para
+    // que el indicador se apague también cuando una de ellas falla.
+    this.catalog
+      .getGuardians()
+      .pipe(
+        finalize(() => {
+          guardiansReady = true;
+          checkDone();
+        }),
+        this.errors.catch('familia.familiares'),
+      )
+      .subscribe((list) => this.guardians.set(list));
+    this.catalog
+      .getSharingPreferences()
+      .pipe(
+        finalize(() => {
+          prefsReady = true;
+          checkDone();
+        }),
+        this.errors.catch('familia.permisos'),
+      )
+      .subscribe((list) => this.preferences.set(list));
   }
 
   openHistory(): void {
     this.historyLoading.set(true);
     this.showHistory.set(true);
-    this.catalog.getAccessHistory().subscribe((list) => {
-      this.history.set(list);
-      this.historyLoading.set(false);
-    });
+    this.catalog
+      .getAccessHistory()
+      .pipe(
+        finalize(() => this.historyLoading.set(false)),
+        this.errors.catch('familia.historial'),
+      )
+      .subscribe((list) => this.history.set(list));
   }
 
   invite(): void {
@@ -104,12 +122,17 @@ export class FamilyPage {
     }
 
     this.inviting.set(true);
-    this.catalog.inviteGuardian(email).subscribe((guardian) => {
-      this.guardians.update((list) => [...list, guardian]);
-      this.inviting.set(false);
-      this.inviteEmail = '';
-      this.toast.success(`Invitación enviada a ${guardian.email}.`);
-    });
+    this.catalog
+      .inviteGuardian(email)
+      .pipe(
+        finalize(() => this.inviting.set(false)),
+        this.errors.catch('familia.invitar', () => this.invite()),
+      )
+      .subscribe((guardian) => {
+        this.guardians.update((list) => [...list, guardian]);
+        this.inviteEmail = '';
+        this.toast.success(`Invitación enviada a ${guardian.email}.`);
+      });
   }
 
   /** Revocar el acceso de un familiar es una acción sensible: pide confirmación inline. */
@@ -123,21 +146,33 @@ export class FamilyPage {
 
   confirmRevoke(guardian: Guardian): void {
     this.revokingId.set(guardian.id);
-    this.catalog.revokeGuardian(guardian.id).subscribe(() => {
-      this.guardians.update((list) => list.filter((g) => g.id !== guardian.id));
-      this.revokingId.set(null);
-      this.confirmingRevokeId.set(null);
-      this.toast.show(`Se revocó el acceso de ${guardian.name}.`);
-    });
+    this.catalog
+      .revokeGuardian(guardian.id)
+      .pipe(
+        finalize(() => {
+          this.revokingId.set(null);
+          this.confirmingRevokeId.set(null);
+        }),
+        this.errors.catch('familia.revocar'),
+      )
+      .subscribe(() => {
+        this.guardians.update((list) => list.filter((g) => g.id !== guardian.id));
+        this.toast.show(`Se revocó el acceso de ${guardian.name}.`);
+      });
   }
 
   togglePreference(pref: SharingPreference): void {
     this.savingPrefId.set(pref.id);
-    this.catalog.setSharingPreference(pref.id, !pref.enabled).subscribe((updated) => {
-      if (updated) {
-        this.preferences.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
-      }
-      this.savingPrefId.set(null);
-    });
+    this.catalog
+      .setSharingPreference(pref.id, !pref.enabled)
+      .pipe(
+        finalize(() => this.savingPrefId.set(null)),
+        this.errors.catch('familia.permisos'),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.preferences.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
+        }
+      });
   }
 }

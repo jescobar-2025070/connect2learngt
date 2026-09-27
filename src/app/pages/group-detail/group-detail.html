@@ -103,4 +103,21 @@
       }
     </section>
   </div>
+} @else {
+  <!-- La carga terminó sin datos: el grupo no se pudo cargar. -->
+  <div class="empty">
+    <p><strong>No pudimos cargar este grupo.</strong></p>
+    <p class="mini muted mt-0">Revisa tu conexión e inténtalo de nuevo.</p>
+    <div class="actions">
+      <button type="button" class="btn" [disabled]="loading()" (click)="retry()">
+        @if (loading()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Cargando…</span>
+        } @else {
+          <span>Reintentar</span>
+        }
+      </button>
+      <a class="btn subtle" routerLink="/app/grupos">Volver a grupos</a>
+    </div>
+  </div>
 }

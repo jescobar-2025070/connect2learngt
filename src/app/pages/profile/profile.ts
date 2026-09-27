@@ -1,6 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
@@ -22,6 +24,7 @@ interface PrivacyOption {
 export class ProfilePage {
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly student = this.session.student;
 
@@ -94,8 +97,11 @@ export class ProfilePage {
         institution: this.editInstitution.trim() || 'Sin especificar',
         grade: this.editGrade.trim() || 'Sin especificar',
       })
+      .pipe(
+        finalize(() => this.savingEdit.set(false)),
+        this.errors.catch('perfil.guardar', () => this.saveEdit()),
+      )
       .subscribe(() => {
-        this.savingEdit.set(false);
         this.showEdit.set(false);
         this.toast.success('Tu información se actualizó correctamente.');
       });

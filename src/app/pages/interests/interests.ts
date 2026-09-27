@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { INTEREST_TOPICS } from '../../core/mock-data';
 import { SessionService } from '../../core/session.service';
+import { ErrorService } from '../../core/error.service';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
@@ -15,6 +17,7 @@ const MIN_INTERESTS = 3;
 export class InterestsPage {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly errors = inject(ErrorService);
 
   readonly topics = INTEREST_TOPICS;
   readonly selected = signal<string[]>([]);
@@ -52,10 +55,15 @@ export class InterestsPage {
   goNext(): void {
     if (!this.canContinue() || this.saving()) return;
     this.saving.set(true);
-    this.session.saveInterests(this.selected()).subscribe(() => {
-      this.saving.set(false);
-      this.router.navigate([this.session.startRoute()]);
-    });
+    this.session
+      .saveInterests(this.selected())
+      .pipe(
+        finalize(() => this.saving.set(false)),
+        this.errors.catch('intereses.guardar', () => this.goNext()),
+      )
+      .subscribe(() => {
+        this.router.navigate([this.session.startRoute()]);
+      });
   }
 
   back(): void {

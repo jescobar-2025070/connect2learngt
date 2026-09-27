@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { IconComponent } from './icon';
-import { ToastService } from '../core/toast.service';
+import { Toast, ToastService } from '../core/toast.service';
 
 @Component({
   selector: 'app-toast-host',
@@ -8,9 +8,20 @@ import { ToastService } from '../core/toast.service';
   template: `
     <div class="toast-wrap" role="status" aria-live="polite">
       @for (t of toastService.toasts(); track t.id) {
-        <div class="toast" [class.success]="t.tone === 'success'">
-          <app-icon [name]="t.tone === 'success' ? 'check' : 'spark'" [size]="18" />
-          <span>{{ t.text }}</span>
+        <div class="toast" [class.success]="t.tone === 'success'" [class.error]="t.tone === 'error'">
+          <app-icon
+            [name]="t.tone === 'success' ? 'check' : t.tone === 'error' ? 'alert' : 'spark'"
+            [size]="18"
+          />
+          <div class="toast-body">
+            @if (t.title) {
+              <strong>{{ t.title }}</strong>
+            }
+            <span>{{ t.text }}</span>
+          </div>
+          @if (t.action; as action) {
+            <button type="button" class="toast-action" (click)="run(t)">{{ action.label }}</button>
+          }
           <button
             type="button"
             class="toast-close"
@@ -53,6 +64,9 @@ import { ToastService } from '../core/toast.service';
       .toast.success {
         border-left-color: var(--success);
       }
+      .toast.error {
+        border-left-color: var(--danger);
+      }
       .toast app-icon:first-child {
         color: var(--brand);
         flex: none;
@@ -60,8 +74,37 @@ import { ToastService } from '../core/toast.service';
       .toast.success app-icon:first-child {
         color: var(--success);
       }
-      .toast span {
+      .toast.error app-icon:first-child {
+        color: var(--danger);
+      }
+      .toast-body {
         flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .toast-body strong {
+        font-weight: 750;
+        line-height: 1.35;
+      }
+      .toast-body span {
+        line-height: 1.4;
+      }
+      .toast-action {
+        flex: none;
+        border: 1px solid var(--line-strong);
+        background: transparent;
+        color: var(--brand);
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        cursor: pointer;
+        min-height: 32px;
+        padding: 4px 10px;
+        border-radius: var(--radius-sm);
+      }
+      .toast-action:hover {
+        background: var(--surface-2);
       }
       .toast-close {
         border: 0;
@@ -95,4 +138,10 @@ import { ToastService } from '../core/toast.service';
 })
 export class ToastHostComponent {
   readonly toastService = inject(ToastService);
+
+  /** Ejecuta la acción del aviso y lo cierra: evita avisos que se solapan. */
+  run(toast: Toast): void {
+    toast.action?.run();
+    this.toastService.dismiss(toast.id);
+  }
 }

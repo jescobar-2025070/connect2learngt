@@ -134,11 +134,71 @@ Los demás participantes de una conversación (tutores, compañeros de grupo)
 son personas simuladas con nombre propio y no cambian, igual que en una app
 real no cambiarías el nombre de tus contactos.
 
+## Manejo de errores
+
+Los errores no se muestran nunca con su texto técnico (`TypeError`, SQL,
+`500`, un `stack trace`). Hay un único camino para traducirlos:
+
+- **`src/app/core/error-messages.ts`** — tabla de 10 tipos de error
+  (`validation`, `auth`, `forbidden`, `notFound`, `conflict`, `offline`,
+  `timeout`, `rateLimit`, `server`, `unknown`) con su título, su explicación
+  en lenguaje natural y si tiene sentido reintentar. También decide el tipo a
+  partir de un código HTTP o de los mensajes que emite el navegador cuando no
+  hay servidor (`Failed to fetch`, `NetworkError`, `Load failed`, `status: 0`).
+- **`src/app/core/error.service.ts`** — `report()` guarda la traza en la consola
+  y muestra el aviso; el operador `errors.catch('contexto')` hace ambos cosas de
+  una vez dentro de un `pipe` y corta la suscripción con `EMPTY` para que la
+  vista no se quede a medias.
+- **`src/app/core/error.handler.ts`** — `ErrorHandler` global (registrado en
+  `app.config.ts` junto a `withNavigationErrorHandler`) para lo que escapa de
+  cualquier `subscribe`: errores de navegación, promesas sin `catch` y
+  excepciones fuera de los callbacks de Angular.
+
+Todas las llamadas de `subscribe` siguen el mismo orden, de modo que el
+indicador de carga se limpia siempre, haya éxito o fallo:
+
+```ts
+this.catalog
+  .getStudyGroups(subject)
+  .pipe(
+    finalize(() => this.loading.set(false)),
+    this.errors.catch('grupos.lista', () => this.search()),
+  )
+  .subscribe((list) => this.groups.set(list));
+```
+
+Cuando el reintento automático no basta, la pantalla muestra un estado de
+error propio con botón "Reintentar" (ficha del tutor, grupo de estudio, reseñas)
+en lugar de un estado vacío que mentiría al usuario. El aviso incluye la acción
+"Reintentar" solo en los errores reintentables: un `401` o un `403` no
+proponen repetir algo que va a volver a fallar.
+
+**Pendiente cuando exista backend:** los estados HTTP ya están mapeados y
+listos, pero no se pueden provocar desde la app. El prototipo no usa
+`HttpClient` (los servicios devuelven datos en memoria), así que `400`, `401`,
+`403`, `409`, `422`, `429` y `5xx` solo se han verificado con la tabla de
+mapeo, no contra respuestas reales.
+
+## Página no encontrada
+
+Las rutas inexistentes ya no se redirigen al login. Hay dos 404 distintos, ambos
+con el mismo componente (`src/app/pages/not-found/`):
+
+- Dentro de `/app/**` se muestra **dentro del shell**, para que el usuario
+  conserve la navegación lateral y pueda seguir con otra sección.
+- Fuera de `/app` se muestra **a pantalla completa** con marca e interruptor de
+  tema, igual que las pantallas de acceso.
+
+El componente es responsivo (reorganiza la composición en móvil), respeta el
+modo oscuro y los targets táctiles de 44px, y ofrece dos salidas: "Volver al
+inicio" (al panel del rol) y "Regresar" (historial del navegador).
+
 ## Estructura del proyecto
 
 ```
 src/app/
-  core/            Modelos, datos mock y servicios (sesión, catálogo, tema, toasts)
+  core/            Modelos, datos mock y servicios (sesión, catálogo, tema, toasts,
+                   errores)
   shared/          Componentes reutilizables (iconos SVG, toggle de tema, toasts)
   pages/           Una carpeta por pantalla (componentes standalone, lazy-loaded)
 src/styles.css     Sistema de diseño: tokens de color (claro/oscuro), tipografía,

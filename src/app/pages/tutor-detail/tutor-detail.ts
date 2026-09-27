@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize, tap } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { Booking, Tutor, TutorReview, TutorSlot } from '../../core/models';
@@ -20,6 +22,7 @@ export class TutorDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly tutor = signal<Tutor | null>(null);
   readonly slots = signal<TutorSlot[]>([]);
@@ -30,7 +33,9 @@ export class TutorDetailPage {
   // Reseñas completas
   readonly showReviews = signal(false);
   readonly reviewsLoading = signal(false);
+  readonly reviewsFailed = signal(false);
   readonly reviews = signal<TutorReview[]>([]);
+  private reviewsId = '';
 
   goal = '';
   modality = 'Videollamada';
@@ -54,20 +59,50 @@ export class TutorDetailPage {
     return [...groups.entries()].map(([date, g]) => ({ date, ...g }));
   });
 
+  private readonly id = this.route.snapshot.paramMap.get('id') ?? '';
+
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.catalog.getTutor(id).subscribe((tutor) => {
-      if (!tutor) {
-        this.toast.show('No encontramos ese tutor.');
-        this.router.navigate(['/app/tutores']);
-        return;
-      }
-      this.tutor.set(tutor);
-      this.catalog.getSlots().subscribe((slots) => {
-        this.slots.set(slots);
-        this.loading.set(false);
+    this.load();
+  }
+
+  /**
+   * Carga el perfil y sus horarios. Se separa del constructor para poder
+   * reutilizarla como acción de reintento cuando la llamada falla.
+   */
+  private load(): void {
+    this.loading.set(true);
+    this.catalog
+      .getTutor(this.id)
+      .pipe(
+        // `finalize` apaga el indicador aunque la llamada falle: si no, la
+        // pantalla se quedaría con el esqueleto de carga para siempre.
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('tutor.perfil'),
+      )
+      .subscribe((tutor) => {
+        // El id existe en la URL pero no en el catálogo: no es un fallo, es un
+        // enlace roto, así que se avisa y se vuelve al listado.
+        if (!tutor) {
+          this.toast.show('No encontramos ese tutor.');
+          this.router.navigate(['/app/tutores']);
+          return;
+        }
+        this.tutor.set(tutor);
+        this.loadSlots();
       });
-    });
+  }
+
+  /** Reintenta la carga del perfil desde el estado de error. */
+  retry(): void {
+    if (this.loading()) return;
+    this.load();
+  }
+
+  private loadSlots(): void {
+    this.catalog
+      .getSlots()
+      .pipe(this.errors.catch('tutor.horarios', () => this.loadSlots()))
+      .subscribe((slots) => this.slots.set(slots));
   }
 
   selectSlot(slot: TutorSlot): void {
@@ -81,12 +116,24 @@ export class TutorDetailPage {
   }
 
   openReviews(id: string): void {
+    this.reviewsId = id;
+    this.reviewsFailed.set(false);
     this.reviewsLoading.set(true);
     this.showReviews.set(true);
-    this.catalog.getTutorReviews(id).subscribe((list) => {
-      this.reviews.set(list);
-      this.reviewsLoading.set(false);
-    });
+    this.catalog
+      .getTutorReviews(id)
+      .pipe(
+        finalize(() => this.reviewsLoading.set(false)),
+        tap({ error: () => this.reviewsFailed.set(true) }),
+        this.errors.catch('tutor.reseñas', () => this.retryReviews()),
+      )
+      .subscribe((list) => this.reviews.set(list));
+  }
+
+  /** Reintenta el modal de reseñas tras un fallo de carga. */
+  retryReviews(): void {
+    if (this.reviewsLoading()) return;
+    this.openReviews(this.reviewsId);
   }
 
   /** Iniciales del autor de una reseña (no viajan en el mock). */
@@ -116,10 +163,15 @@ export class TutorDetailPage {
       goal: this.goal.trim() || 'Reforzar los temas del próximo examen',
     };
 
-    this.session.confirmBooking(newBooking).subscribe(() => {
-      this.booking.set(false);
-      this.router.navigate(['/app/reserva-confirmada']);
-    });
+    this.session
+      .confirmBooking(newBooking)
+      .pipe(
+        finalize(() => this.booking.set(false)),
+        this.errors.catch('tutor.reservar', () => this.confirm()),
+      )
+      .subscribe(() => {
+        this.router.navigate(['/app/reserva-confirmada']);
+      });
   }
 
   comingSoon(feature: string): void {

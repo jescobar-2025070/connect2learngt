@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import {
@@ -40,6 +42,7 @@ export class HomePage {
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly errors = inject(ErrorService);
 
   readonly student = this.session.student;
   readonly summary = signal<HomeSummary | null>(null);
@@ -68,10 +71,13 @@ export class HomePage {
   private pendingSearches = 0;
 
   constructor() {
-    this.catalog.getHomeSummary().subscribe((data) => {
-      this.summary.set(data);
-      this.loading.set(false);
-    });
+    this.catalog
+      .getHomeSummary()
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('inicio.resumen'),
+      )
+      .subscribe((data) => this.summary.set(data));
   }
 
   get firstName(): string {
@@ -91,22 +97,36 @@ export class HomePage {
     this.pendingSearches = 4;
     this.searchOpen.set(true);
 
-    this.catalog.getTutors().subscribe((list) => {
-      this.searchTutors.set(list);
-      this.countSearch();
-    });
-    this.catalog.getResources().subscribe((list) => {
-      this.searchResources.set(list);
-      this.countSearch();
-    });
-    this.catalog.getStudyGroups().subscribe((list) => {
-      this.searchGroups.set(list);
-      this.countSearch();
-    });
-    this.catalog.getPosts().subscribe((list) => {
-      this.searchPosts.set(list);
-      this.countSearch();
-    });
+    // Las cuatro búsquedas vuelan en paralelo: `finalize` las cuenta tanto si
+    // terminan como si fallan, así el spinner del modal nunca se queda colgado.
+    this.catalog
+      .getTutors()
+      .pipe(
+        finalize(() => this.countSearch()),
+        this.errors.catch('inicio.busqueda.tutores'),
+      )
+      .subscribe((list) => this.searchTutors.set(list));
+    this.catalog
+      .getResources()
+      .pipe(
+        finalize(() => this.countSearch()),
+        this.errors.catch('inicio.busqueda.recursos'),
+      )
+      .subscribe((list) => this.searchResources.set(list));
+    this.catalog
+      .getStudyGroups()
+      .pipe(
+        finalize(() => this.countSearch()),
+        this.errors.catch('inicio.busqueda.grupos'),
+      )
+      .subscribe((list) => this.searchGroups.set(list));
+    this.catalog
+      .getPosts()
+      .pipe(
+        finalize(() => this.countSearch()),
+        this.errors.catch('inicio.busqueda.publicaciones'),
+      )
+      .subscribe((list) => this.searchPosts.set(list));
   }
 
   private countSearch(): void {
@@ -153,10 +173,13 @@ export class HomePage {
   openNotifications(): void {
     this.notifLoading.set(true);
     this.notifOpen.set(true);
-    this.catalog.getNotifications().subscribe((list) => {
-      this.notifications.set(list);
-      this.notifLoading.set(false);
-    });
+    this.catalog
+      .getNotifications()
+      .pipe(
+        finalize(() => this.notifLoading.set(false)),
+        this.errors.catch('inicio.notificaciones'),
+      )
+      .subscribe((list) => this.notifications.set(list));
   }
 
   get hasUnread(): boolean {
@@ -164,10 +187,13 @@ export class HomePage {
   }
 
   markAllRead(): void {
-    this.catalog.markNotificationsRead().subscribe((list) => {
-      this.notifications.set(list);
-      this.toast.success('Todas las notificaciones marcadas como leídas.');
-    });
+    this.catalog
+      .markNotificationsRead()
+      .pipe(this.errors.catch('inicio.notificaciones.marcarLeidas'))
+      .subscribe((list) => {
+        this.notifications.set(list);
+        this.toast.success('Todas las notificaciones marcadas como leídas.');
+      });
   }
 
   // ---------------------------------------------------------------
@@ -187,10 +213,13 @@ export class HomePage {
     this.materialsOpen.set(true);
     const summary = this.summary();
     if (!summary) return;
-    this.catalog.getResources().subscribe((resources) => {
-      const subject = summary.recommendedResource.subject;
-      const related = resources.filter((r) => r.subject === subject).slice(0, 3);
-      this.materials.set(related.length ? related : resources.slice(0, 3));
-    });
+    this.catalog
+      .getResources()
+      .pipe(this.errors.catch('inicio.materiales'))
+      .subscribe((resources) => {
+        const subject = summary.recommendedResource.subject;
+        const related = resources.filter((r) => r.subject === subject).slice(0, 3);
+        this.materials.set(related.length ? related : resources.slice(0, 3));
+      });
   }
 }

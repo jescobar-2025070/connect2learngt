@@ -94,7 +94,21 @@ export const routes: Routes = [
         title: 'Mi perfil · CONNECT2LEARN',
         loadComponent: () => import('./pages/profile/profile').then((m) => m.ProfilePage),
       },
+      // Sección inexistente dentro de la app: 404 dentro del shell, para que
+      // el usuario conserve la navegación lateral (ver `pages/not-found`).
+      {
+        path: '**',
+        title: 'Página no encontrada · CONNECT2LEARN',
+        data: { chrome: 'shell' },
+        loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
+      },
     ],
   },
-  { path: '**', redirectTo: 'login' },
+  // Ruta inexistente: 404 a pantalla completa (marca + tema), sin sesión.
+  {
+    path: '**',
+    title: 'Página no encontrada · CONNECT2LEARN',
+    data: { chrome: 'page' },
+    loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
+  },
 ];

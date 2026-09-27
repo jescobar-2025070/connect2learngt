@@ -164,6 +164,24 @@
       </button>
     </section>
   </div>
+} @else {
+  <!-- La carga terminó sin datos: el perfil no se pudo cargar. -->
+  <div class="empty">
+    <p><strong>No pudimos cargar este tutor.</strong></p>
+    <p class="mini muted mt-0">Revisa tu conexión e inténtalo de nuevo.</p>
+    <div class="actions">
+      <button type="button" class="btn" [disabled]="loading()" (click)="retry()">
+        @if (loading()) {
+          <span class="spinner sm on-brand" aria-hidden="true"></span>
+          <span>Cargando…</span>
+        } @else {
+          <app-icon name="arrowRight" [size]="17" />
+          <span>Reintentar</span>
+        }
+      </button>
+      <a class="btn subtle" routerLink="/app/tutores">Volver a tutores</a>
+    </div>
+  </div>
 }
 
 @if (showReviews()) {
@@ -174,6 +192,21 @@
         <div class="skeleton line"></div>
         <div class="skeleton line medium"></div>
         <div class="skeleton line short"></div>
+      </div>
+    } @else if (reviewsFailed()) {
+      <div class="empty">
+        <p><strong>No pudimos cargar las reseñas.</strong></p>
+        <p class="mini mt-0">Revisa tu conexión e inténtalo de nuevo.</p>
+        <div class="actions">
+          <button type="button" class="btn" [disabled]="reviewsLoading()" (click)="retryReviews()">
+            @if (reviewsLoading()) {
+              <span class="spinner sm on-brand" aria-hidden="true"></span>
+              <span>Cargando…</span>
+            } @else {
+              <span>Reintentar</span>
+            }
+          </button>
+        </div>
       </div>
     } @else if (reviews().length === 0) {
       <div class="empty">

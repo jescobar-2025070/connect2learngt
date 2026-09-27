@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ROLE_OPTIONS, RoleOption, UserRole, roleOption } from '../../core/models';
+import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
@@ -26,6 +28,7 @@ export class RegisterPage {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly errors = inject(ErrorService);
 
   readonly roles = ROLE_OPTIONS;
   /** Signal (no campo simple): los computed de abajo dependen de él. */
@@ -132,9 +135,12 @@ export class RegisterPage {
         grade: this.isParent() ? '' : this.grade.trim() || this.defaultGrade(),
         childCode: this.isParent() ? this.childCode.trim().toUpperCase() : undefined,
       })
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('registro.crearCuenta', () => this.submit()),
+      )
       .subscribe((profile) => {
         this.session.setStudent(profile);
-        this.loading.set(false);
         this.toast.success(`¡Cuenta creada como ${roleOption(this.role()).label.toLowerCase()}!`);
         // El padre no tiene onboarding: entra directo a su panel.
         const target = this.session.needsOnboarding() ? '/intereses' : this.session.startRoute();

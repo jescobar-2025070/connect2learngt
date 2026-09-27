@@ -1,7 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { finalize, tap } from 'rxjs';
 import { CatalogService } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { ChatMessage, Conversation } from '../../core/models';
@@ -19,6 +21,7 @@ export class MessagesPage {
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly errors = inject(ErrorService);
 
   readonly conversations = signal<Conversation[]>([]);
   readonly messages = signal<ChatMessage[]>([]);
@@ -35,25 +38,40 @@ export class MessagesPage {
   readonly callTarget = signal<{ name: string; initials: string } | null>(null);
 
   constructor() {
-    this.catalog.getConversations().subscribe((list) => {
-      this.conversations.set(list.map((c) => ({ ...c })));
-      const params = this.route.snapshot.queryParamMap;
-      const tutorId = params.get('tutor');
-      const groupId = params.get('grupo');
+    this.catalog
+      .getConversations()
+      .pipe(
+        // Aquí no se usa `finalize`: el indicador lo enciende y apaga
+        // `loadMessages()`, que se llama desde este mismo `next`. Si la lista
+        // falla, no hay hilo que abrir, así que se apaga a mano.
+        tap({ error: () => this.loading.set(false) }),
+        this.errors.catch('mensajes.conversaciones'),
+      )
+      .subscribe((list) => {
+        this.conversations.set(list.map((c) => ({ ...c })));
+        const params = this.route.snapshot.queryParamMap;
+        const tutorId = params.get('tutor');
+        const groupId = params.get('grupo');
 
-      if (tutorId) {
-        this.catalog.getTutorConversation(tutorId).subscribe(({ conversation, messages }) => {
-          this.embedExternal(conversation, messages);
-        });
-      } else if (groupId) {
-        this.catalog.getGroupConversation(groupId).subscribe(({ conversation, messages }) => {
-          this.embedExternal(conversation, messages);
-        });
-      } else {
-        this.activeId.set(list[0]?.id ?? null);
-        this.loadMessages();
-      }
-    });
+        if (tutorId) {
+          this.catalog
+            .getTutorConversation(tutorId)
+            .pipe(this.errors.catch('mensajes.hiloTutor'))
+            .subscribe(({ conversation, messages }) => {
+              this.embedExternal(conversation, messages);
+            });
+        } else if (groupId) {
+          this.catalog
+            .getGroupConversation(groupId)
+            .pipe(this.errors.catch('mensajes.hiloGrupo'))
+            .subscribe(({ conversation, messages }) => {
+              this.embedExternal(conversation, messages);
+            });
+        } else {
+          this.activeId.set(list[0]?.id ?? null);
+          this.loadMessages();
+        }
+      });
   }
 
   private embedExternal(conversation: Conversation, thread: ChatMessage[]): void {
@@ -91,7 +109,12 @@ export class MessagesPage {
 
   private loadMessages(): void {
     const id = this.activeId();
-    if (!id) return;
+    if (!id) {
+      // Sin conversaciones no hay hilo que cargar: sin esto el indicador
+      // quedaría encendido para siempre.
+      this.loading.set(false);
+      return;
+    }
 
     const external = this.externalThreads.get(id);
     if (external) {
@@ -108,17 +131,22 @@ export class MessagesPage {
     }
 
     this.loading.set(true);
-    this.catalog.getMessages(id).subscribe((list) => {
-      // Los mensajes propios llegan marcados con el sentinela "__me__";
-      // se sustituyen aquí por el nombre real de la sesión (dinámico según
-      // el correo usado para acceder), en vez de un nombre fijo en el mock.
-      this.messages.set(
-        list.map((m) =>
-          m.mine ? { ...m, author: this.myName, authorInitials: this.myInitials } : m,
-        ),
-      );
-      this.loading.set(false);
-    });
+    this.catalog
+      .getMessages(id)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('mensajes.hilo', () => this.loadMessages()),
+      )
+      .subscribe((list) => {
+        // Los mensajes propios llegan marcados con el sentinela "__me__";
+        // se sustituyen aquí por el nombre real de la sesión (dinámico según
+        // el correo usado para acceder), en vez de un nombre fijo en el mock.
+        this.messages.set(
+          list.map((m) =>
+            m.mine ? { ...m, author: this.myName, authorInitials: this.myInitials } : m,
+          ),
+        );
+      });
   }
 
   send(): void {
@@ -136,14 +164,19 @@ export class MessagesPage {
       mine: true,
     };
 
-    this.catalog.sendMessage(message).subscribe((sent) => {
-      this.messages.update((list) => [...list, sent]);
-      // Si el hilo es generado (grupo/tutor), guarda el envío para el re-render.
-      const thread = this.externalThreads.get(conversationId);
-      if (thread) this.externalThreads.set(conversationId, [...thread, sent]);
-      this.draft = '';
-      this.sending.set(false);
-    });
+    this.catalog
+      .sendMessage(message)
+      .pipe(
+        finalize(() => this.sending.set(false)),
+        this.errors.catch('mensajes.enviar', () => this.send()),
+      )
+      .subscribe((sent) => {
+        this.messages.update((list) => [...list, sent]);
+        // Si el hilo es generado (grupo/tutor), guarda el envío para el re-render.
+        const thread = this.externalThreads.get(conversationId);
+        if (thread) this.externalThreads.set(conversationId, [...thread, sent]);
+        this.draft = '';
+      });
   }
 
   openCall(): void {

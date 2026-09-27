@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CatalogService, TutorFilters } from '../../core/catalog.service';
+import { ErrorService } from '../../core/error.service';
 import { Tutor } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
@@ -13,6 +15,7 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle';
 })
 export class TutorsPage {
   private readonly catalog = inject(CatalogService);
+  private readonly errors = inject(ErrorService);
 
   readonly subjects = this.catalog.getSubjects();
   readonly tutors = signal<Tutor[]>([]);
@@ -40,11 +43,16 @@ export class TutorsPage {
       maxPrice: this.maxPrice,
       minRating: this.minRating,
     };
-    this.catalog.getTutors(filters).subscribe((list) => {
-      this.tutors.set(list);
-      this.visibleCount.set(this.perPage);
-      this.loading.set(false);
-    });
+    this.catalog
+      .getTutors(filters)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        this.errors.catch('tutores.buscar', () => this.search()),
+      )
+      .subscribe((list) => {
+        this.tutors.set(list);
+        this.visibleCount.set(this.perPage);
+      });
   }
 
   loadMore(): void {
