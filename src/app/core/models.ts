@@ -69,8 +69,15 @@ export interface UserProfile {
   /** Temas de interés (estudiante) o materias que imparte (docente). */
   interests: string[];
   initials: string;
-  /** Código de vinculación del hijo; solo para el rol padre. */
+  /** Código de vinculación de esta cuenta; solo para el rol estudiante. */
   childCode?: string;
+  /**
+   * Códigos de los hijos que esta cuenta de familia administra; solo para el
+   * rol padre. Es una lista y no un valor único porque una misma familia puede
+   * tener más de un hijo: el padre vincula uno, entra otro, y ambos aparecen
+   * en su panel sin que se pierda el primero.
+   */
+  linkedChildCodes?: string[];
 }
 
 export interface Tutor {

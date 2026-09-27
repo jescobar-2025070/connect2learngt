@@ -1960,8 +1960,41 @@ select.input {
   border-top: 1px dashed var(--line);
 }
 
-/* ---------- código de vinculación (perfil del estudiante) ---------- */
-.linked-code {
+/* ---------- selector de hijo (panel familiar) ---------- */
+.child-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.child-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.child-chip:hover {
+  border-color: var(--brand);
+}
+.child-chip.active {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  font-weight: 600;
+}
+.child-chip:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---------- código de vinculación (perfil del estudiante) ---------- */.linked-code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;

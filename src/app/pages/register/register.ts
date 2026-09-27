@@ -2,7 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { LINKED_CODE_PATTERN, SessionService, normalizeLinkedCode } from '../../core/session.service';
+import {
+  LINKED_CODE_PATTERN,
+  SessionService,
+  generateLinkedCode,
+  normalizeLinkedCode,
+} from '../../core/session.service';
 import { ROLE_OPTIONS, RoleOption, UserRole, roleOption } from '../../core/models';
 import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
@@ -154,7 +159,15 @@ export class RegisterPage {
     return 'Sin especificar';
   }
 
-  /** Registro simulado con Google: rellena el formulario con la cuenta demo del rol. */
+  /**
+   * Registro simulado con Google: rellena el formulario con la cuenta demo del
+   * rol y continúa el alta.
+   *
+   * Para el padre se emite un código de vinculación nuevo, no uno fijo: así el
+   * alta con Google no ata a la demo al único hijo de los datos de ejemplo, y
+   * sirve para enseñar de un vistazo que un padre entra con su hijo ya
+   * vinculado.
+   */
   googleRegister(): void {
     if (this.googleLoading()) return;
     this.googleLoading.set(true);
@@ -168,7 +181,7 @@ export class RegisterPage {
       // El padre no tiene institución ni grado en el formulario.
       this.institution = this.isParent() ? '' : 'Colegio San Marcos';
       this.grade = this.isParent() ? '' : this.isTutor() ? 'Matemáticas' : '5to Bachillerato';
-      this.childCode = this.isParent() ? 'C2L-4F7K-2Q' : '';
+      this.childCode = this.isParent() ? generateLinkedCode() : '';
       this.terms = true;
       this.toast.success(`Cuenta de Google de ${profile.name} seleccionada.`);
       this.submit();

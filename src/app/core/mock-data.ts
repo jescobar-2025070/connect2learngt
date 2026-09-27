@@ -55,7 +55,7 @@ export const DEMO_STUDENT: UserProfile = {
    * se muestra en su Perfil; el padre lo escribe para vincularse (ver
    * `CHILDREN[0].linkedCode`, que es el mismo valor en la demo).
    */
-  childCode: 'C2L-4F7K-2Q',
+  childCode: 'C2L-4F7K-2Q7',
 };
 
 /** Perfil base de la demo docente: mismas reglas, datos de maestro/tutor. */
@@ -73,7 +73,11 @@ export const DEMO_TUTOR: UserProfile = {
 
 /**
  * Perfil base de la demo de familia: el padre no declara institución ni grado
- * (esos datos son del hijo), solo su vínculo.
+ * (esos datos son del hijo), solo sus vínculos.
+ *
+ * Llega con un hijo ya vinculado para que la demo arranque con contenido: el
+ * panel muestra progreso, sesiones y tutores desde el primer segundo. Añadir
+ * un segundo hijo es tan fácil como escribir otro código en su panel.
  */
 export const DEMO_PARENT: UserProfile = {
   id: 'par-001',
@@ -85,7 +89,7 @@ export const DEMO_PARENT: UserProfile = {
   grade: '',
   interests: [],
   initials: 'JR',
-  childCode: 'C2L-4F7K-2Q',
+  linkedChildCodes: ['C2L-4F7K-2Q7'],
 };
 
 export const TUTORS: Tutor[] = [
@@ -1023,7 +1027,7 @@ export const CHILDREN: ChildAccount[] = [
     grade: DEMO_STUDENT.grade,
     institution: DEMO_STUDENT.institution,
     interests: DEMO_STUDENT.interests.length ? DEMO_STUDENT.interests : ['Matemáticas', 'Física', 'Inglés'],
-    linkedCode: 'C2L-4F7K-2Q',
+    linkedCode: 'C2L-4F7K-2Q7',
     weeklyGoalPercent: 75,
     hoursThisWeek: 6.5,
     studyStreak: 14,
@@ -1064,3 +1068,167 @@ export const CHILD_SESSIONS: Booking[] = [
     bookedByRole: 'padre',
   },
 ];
+
+/* ------------------------------------------------------------------
+   Hijos generados a partir de un código
+   ------------------------------------------------------------------ */
+
+const SYNTH_NAMES = [
+  'Lucía Fernández',
+  'Mateo González',
+  'Valeria Ortiz',
+  'Daniela Rojas',
+  'Santiago Molina',
+  'Camila Paredes',
+  'Joaquín Herrera',
+  'Mariana Castaño',
+  'Tomás Aguilar',
+  'Isabella Navarro',
+  'Nicolás Espinosa',
+  'Renata Vergara',
+];
+
+const SYNTH_SCHOOLS = [
+  'Colegio San Marcos',
+  'Institución Los Nogales',
+  'Colegio El Mirador',
+  'Instituto Santa Clara',
+  'Colegio Bilingüe Andino',
+];
+
+const SYNTH_SUBJECTS = [
+  'Matemáticas',
+  'Física',
+  'Química',
+  'Inglés',
+  'Literatura',
+  'Biología',
+  'Historia',
+  'Programación',
+];
+
+/**
+ * Hash estable del código: dos letras iguales siempre eligen la misma nota.
+ * Sin esto, un hijo generado cambiaría de nombre en cada recarga y el padre
+ * vería un perfil distinto al que acaba de vincular.
+ */
+function hashOf(text: string): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash * 31 + text.charCodeAt(i)) % 100003;
+  }
+  return hash;
+}
+
+/**
+ * Elige un elemento de una lista de forma estable a partir del código.
+ * El mismo código elige siempre el mismo elemento.
+ */
+function pick<T>(list: readonly T[], salt: string): T {
+  return list[hashOf(`${salt}#${list.length}`) % list.length];
+}
+
+/** Id del hijo generado a partir de un código: siempre el mismo. */
+export function synthChildId(code: string): string {
+  return `child-${code}`;
+}
+
+/**
+ * Hijo correspondiente a un código que no está en `CHILDREN`.
+ *
+ * Es un prototipo, así que un código con el formato correcto **siempre**
+ * vincula a alguien: si el código no existe en los datos de ejemplo se genera
+ * un hijo plausible a partir del propio código. La alternativa (rechazar el
+ * código) obligaría a memorizar `C2L-4F7K-2Q7` para poder hacer la demo, que es
+ * justo lo que hay que evitar enseñando el producto.
+ *
+ * No es aleatorio: todo se deriva del hash del código, de modo que volver a
+ * escribir el mismo código devuelve el mismo hijo y la demo es coherente entre
+ * recargas.
+ */
+export function synthChildForCode(code: string): ChildAccount {
+  const hash = hashOf(code);
+  const name = SYNTH_NAMES[hash % SYNTH_NAMES.length];
+  const age = 14 + (hash % 4);
+  const grade = { 14: '2do Bachillerato', 15: '3ro Bachillerato', 16: '4to Bachillerato', 17: '5to Bachillerato' }[age] ?? '5to Bachillerato';
+  const parts = name.split(' ');
+  const initials = parts
+    .map((p) => p[0] ?? '')
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const subjects = SYNTH_SUBJECTS.filter(
+    (_, i) => (hash >> (i % 8)) % 3 !== 0,
+  ).slice(0, 3);
+
+  const tutorIds = TUTORS.filter((_, i) => (hash >> (i % 12)) % 5 === 0)
+    .slice(0, 2)
+    .map((t) => t.id);
+
+  return {
+    id: synthChildId(code),
+    name,
+    initials,
+    age,
+    grade,
+    institution: pick(SYNTH_SCHOOLS, code),
+    interests: subjects.length ? subjects : [SYNTH_SUBJECTS[hash % SYNTH_SUBJECTS.length]],
+    linkedCode: code,
+    weeklyGoalPercent: 45 + (hash % 50),
+    hoursThisWeek: Math.round((2 + (hash % 55) / 10) * 10) / 10,
+    studyStreak: 1 + (hash % 21),
+    subjectProgress: (subjects.length ? subjects : [SYNTH_SUBJECTS[hash % SYNTH_SUBJECTS.length]]).map(
+      (subject, i) => ({ subject, percent: 25 + ((hash >> (i + 2)) % 70) }),
+    ),
+    tutorIds: tutorIds.length ? tutorIds : [TUTORS[hash % TUTORS.length].id],
+  };
+}
+
+/**
+ * Sesiones del hijo generado: una agendada por él y otra por su padre.
+ *
+ * El panel distingue "la agendaste tú" de "la agendó el estudiante", así que un
+ * hijo recién vinculado con una sola sesión dejaría esa distinción sin
+ * demostrar. Estas dos la dejan clara de inmediato.
+ */
+export function synthSessionsForChild(child: ChildAccount): Booking[] {
+  const hash = hashOf(child.linkedCode);
+  const first = TUTORS.find((t) => t.id === child.tutorIds[0]) ?? TUTORS[0];
+  const second = TUTORS.find((t) => t.id === child.tutorIds[1]) ?? TUTORS[1];
+  const subject = child.subjectProgress[0]?.subject ?? 'Matemáticas';
+  const secondSubject = child.subjectProgress[1]?.subject ?? 'Inglés';
+
+  return [
+    {
+      id: `${child.id}-bk-1`,
+      tutorName: first.name,
+      tutorInitials: first.initials,
+      subject,
+      date: ['martes, 21 de abril', 'miércoles, 22 de abril', 'jueves, 23 de abril'][
+        hash % 3
+      ],
+      time: '16:00',
+      modality: 'Videollamada',
+      goal: 'Repasar los ejercicios de la última semana',
+      forName: child.name,
+      forChildId: child.id,
+      bookedByRole: 'estudiante',
+    },
+    {
+      id: `${child.id}-bk-2`,
+      tutorName: second.name,
+      tutorInitials: second.initials,
+      subject: secondSubject,
+      date: ['viernes, 24 de abril', 'sábado, 25 de abril', 'lunes, 27 de abril'][
+        hash % 3
+      ],
+      time: '11:00',
+      modality: 'Presencial',
+      goal: 'Preparar el examen de la unidad',
+      forName: child.name,
+      forChildId: child.id,
+      bookedByRole: 'padre',
+    },
+  ];
+}

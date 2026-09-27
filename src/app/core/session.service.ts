@@ -66,18 +66,21 @@ export class SessionService {
   readonly isParent = computed(() => this.role() === 'padre');
 
   /**
-   * Código de vinculación del hijo. Es la única vía por la que un padre llega
-   * a los datos de un menor: sin él no hay hijo que supervisar, así que el
-   * panel familiar debe poder Mostrar el estado "sin vincular" en vez de
-   * inventarse datos.
+   * Código de vinculación de la cuenta activa. Solo el estudiante lo tiene: es
+   * el código que comparte con su familia para que un padre pueda supervisarlo.
+   * Para el padre la vía de entrada son `linkedChildCodes`.
    */
   readonly childCode = computed<string | null>(() => {
     const code = this._student()?.childCode;
     return code ? normalizeLinkedCode(code) : null;
   });
 
-  /** ¿Tiene algún hijo vinculado? Determina qué muestra el panel familiar. */
-  readonly hasLinkedChild = computed(() => this.childCode() !== null);
+  /**
+   * Códigos de los hijos que administra la cuenta de familia activa. Puede
+   * haber más de uno: el padre vincula el primero al registrarse y despues
+   * añade los demás desde su panel, y todos coexisten.
+   */
+  readonly linkedChildCodes = computed<string[]>(() => this._student()?.linkedChildCodes ?? []);
 
   /** Sesiones que el padre agendó para un hijo, no para sí mismo. */
   readonly childBookings = computed(() => this._bookings().filter((b) => !!b.forChildId));
@@ -131,10 +134,15 @@ export class SessionService {
     };
     if (role === 'estudiante') {
       student.childCode = generateLinkedCode();
-    } else if (role === 'padre' && student.childCode) {
-      student.childCode = normalizeLinkedCode(student.childCode);
+      delete student.linkedChildCodes;
+    } else if (role === 'padre' && data.childCode) {
+      // El padre entra con el código de su primer hijo ya vinculado; los demás
+      // los añade después desde el panel.
+      student.linkedChildCodes = [normalizeLinkedCode(data.childCode)];
+      delete student.childCode;
     } else {
       delete student.childCode;
+      delete student.linkedChildCodes;
     }
     return of(student).pipe(delay(1400));
   }
@@ -158,19 +166,34 @@ export class SessionService {
   }
 
   /**
-   * Guarda o limpia el código de vinculación del hijo.
+   * Añade un hijo a la cuenta de familia. Es idempotente: vincular dos veces el
+   * mismo código no duplica nada.
    *
-   * El perfil del padre es el dueño de la cuenta, así que es ahí donde vive el
-   * vínculo: `null` lo deja como "sin hijo vinculado" y el panel familiar pasa
-   * a pedir un código en vez de mostrar datos de un menor.
+   * El vínculo vive en el perfil del padre porque es su cuenta la que lo
+   * autoriza. Para quitarlo está `removeChildCode`, que opera sobre el hijo
+   * concreto: cuando ya no queda ninguno, el panel vuelve al estado "sin hijo
+   * vinculado" en vez de quedarse en blanco.
    */
-  setChildCode(code: string | null): void {
+  addChildCode(code: string): void {
+    const normalized = normalizeLinkedCode(code);
+    this.updateLinkedCodes((codes) =>
+      codes.includes(normalized) ? codes : [...codes, normalized],
+    );
+  }
+
+  removeChildCode(code: string): void {
+    const normalized = normalizeLinkedCode(code);
+    this.updateLinkedCodes((codes) => codes.filter((c) => c !== normalized));
+  }
+
+  private updateLinkedCodes(change: (codes: string[]) => string[]): void {
     this._student.update((s) => {
       if (!s) return s;
-      const next = { ...s };
-      if (code) next.childCode = code.trim().toUpperCase();
-      else delete next.childCode;
-      return next;
+      const next: string[] = change(s.linkedChildCodes ?? []);
+      const updated = { ...s };
+      if (next.length) updated.linkedChildCodes = next;
+      else delete updated.linkedChildCodes;
+      return updated;
     });
     this.persist();
   }
@@ -241,6 +264,15 @@ export class SessionService {
         // uno al vuelo: es la misma cuenta con su código definitivo.
         if (student.role === 'estudiante' && !student.childCode) {
           student.childCode = generateLinkedCode();
+        }
+        // El padre antes guardaba un único `childCode`. Ese vínculo no se
+        // pierde: se traslada a la lista, y a partir de ahí conviven varios.
+        if (student.role === 'padre' && student.childCode) {
+          const previous = normalizeLinkedCode(student.childCode);
+          student.linkedChildCodes = [previous, ...(student.linkedChildCodes ?? [])].filter(
+            (code, i, all) => all.indexOf(code) === i,
+          );
+          delete student.childCode;
         }
         this._student.set(student);
         this._bookings.set((data.bookings ?? []).map((b) => this.normalizeBooking(b)));

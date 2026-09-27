@@ -88,9 +88,24 @@ ruta, de modo que ocultar una sección y bloquearla por URL no pueden divergir.
 
 El vínculo entre padre e hijo se hace con un código, no con un correo: el hijo
 lo genera su cuenta (`C2L-XXXX-XXX`, en **Perfil → Código de vinculación**) y el
-padre lo escribe al registrarse o en su panel. Un código que no existe no
-vincula a nadie, y "desvincular" es una acción real que borra el vínculo de la
-sesión.
+padre lo escribe al registrarse o en su panel. "Desvincular" es una acción real
+que borra el vínculo de la sesión.
+
+Tres decisiones del prototipo:
+
+- **Un padre puede tener más de un hijo.** `linkedChildCodes` es una lista, y el
+  formulario de vinculación está siempre visible en el panel, tenga uno o cinco.
+  Con varios, aparece un selector de hijos y la reserva se puede atribuir a
+  cualquiera de ellos.
+- **Cualquier código con el formato correcto vincula a alguien.** Si el código no
+  está en los datos de ejemplo se genera un hijo a partir del propio código
+  (`synthChildForCode`), de forma determinista: el mismo código devuelve siempre
+  el mismo hijo, así que recargar no cambia lo que el padre tiene vinculado. La
+  alternativa —rechazar el código— obligaría a memorizar `C2L-4F7K-2Q7` para
+  poder hacer la demo. Lo único que se rechaza es un código mal escrito.
+- **El padre de la demo llega con un hijo ya vinculado**, para no enseñar un
+  panel vacío. El registro con Google emite un código nuevo en vez de uno fijo,
+  así que también sirve para ver el alta con hijo desde el principio.
 
 Como el prototipo guarda una sola sesión por navegador, el hijo de la demo y su
 padre no pueden estar conectados a la vez: la reserva que el padre agende se
@@ -120,11 +135,15 @@ verá en su panel, pero no en una segunda ventana abierta como estudiante.
 ### Probar el rol padre
 
 1. Entra en `/registro`, elige **Padre de familia** y escribe el código
-   `C2L-4F7K-2Q` (es el del estudiante de la demo) → `/app/familia`.
+   `C2L-4F7K-2Q7` (es el del estudiante de la demo) → `/app/familia`.
 2. En el panel del hijo verás su progreso semanal, el avance por materia, sus
    sesiones —marcando cuáles agendó él y cuáles agendaste tú— y sus tutores.
    Desde aquí puedes **reservarle** una tutoría nueva.
-3. Entra en **Comunidad**: se abre en modo lectura, sin compositor, sin
+3. Escribe cualquier otro código con el formato `C2L-XXXX-XXX` (por ejemplo
+   `C2L-9K3M-7XT`) en **Vincular otro hijo**: tras la espera simulada aparece un
+   segundo hijo con su progreso y sus sesiones, y arriba del panel sale el
+   selector para pasar de uno a otro.
+4. Entra en **Comunidad**: se abre en modo lectura, sin compositor, sin
    "me gusta" y sin poder responder. En **Recursos** se puede descargar pero
    no subir. Si escribes `/app/mensajes` o `/app/inicio` a mano, el guard te
    devuelve al panel con un aviso.
@@ -142,7 +161,7 @@ verá en su panel, pero no en una segunda ventana abierta como estudiante.
    impartes?" → `/app/inicio` sin "Tutorías" ni "Supervisión familiar".
 4. **Padre de familia:** sin rango de edad, con código de vinculación →
    entra directo a `/app/familia` (panel del hijo), sin pasar por intereses.
-   Con el código de la demo (`C2L-4F7K-2Q`, el mismo que aparece en el perfil
+   Con el código de la demo (`C2L-4F7K-2Q7`, el mismo que aparece en el perfil
    del estudiante demo) ve el progreso, las sesiones y los tutores del hijo; con
    cualquier otro código ve el estado "sin hijo vinculado" y puede intentarlo
    otra vez.

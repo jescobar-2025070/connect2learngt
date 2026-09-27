@@ -105,26 +105,42 @@ export class ChildPanelComponent {
       )
       .subscribe((list) => {
         this.children.set(list);
-        const first = list[0]?.id ?? null;
-        this.childId.set(first);
-        if (first) this.loadChildDetail(first);
+        // Al recargar se conserva el hijo que el padre estaba mirando, y no
+        // se le devuelve al primero: con varios hijos, volver siempre al
+        // primero perdería el contexto en cada visita.
+        const stillThere = list.find((c) => c.id === this.childId());
+        const selected = stillThere ?? list[0] ?? null;
+        this.childId.set(selected?.id ?? null);
+        this.loadChildDetail(selected);
       });
   }
 
-  private loadChildDetail(id: string): void {
+  /** Cambia de hijo en el panel: recarga sus sesiones y sus tutores. */
+  selectChild(id: string): void {
+    if (this.childId() === id) return;
+    this.childId.set(id);
+    this.sessions.set([]);
+    this.tutors.set([]);
+    this.loadChildDetail(this.child() ?? null);
+  }
+
+  private loadChildDetail(child: ChildAccount | null): void {
+    if (!child) return;
     this.catalog
-      .getChildSessions(id)
-      .pipe(this.errors.catch('familia.sesiones', () => this.loadChildDetail(id)))
+      .getChildSessions(child)
+      .pipe(this.errors.catch('familia.sesiones', () => this.loadChildDetail(child)))
       .subscribe((list) => this.sessions.set(list));
 
-    const child = this.children().find((c) => c.id === id);
-    if (child) this.tutors.set(this.catalog.getChildTutors(child));
+    this.tutors.set(this.catalog.getChildTutors(child));
   }
 
   /**
-   * Vincula un hijo con su código. El código es lo que el hijo generó, así que
-   * un código equivocado no vincula a nadie: se explica el fallo en línea y el
-   * panel sigue en "sin hijo vinculado".
+   * Vincula un hijo con su código.
+   *
+   * El único rechazo posible es el formato: en un prototipo cualquier código
+   * bien escrito devuelve un hijo, así que la espera (~1,2 s, como el resto de
+   * llamadas) y el resultado favorable son el mensaje. El panel muestra el
+   * spinner mientras tanto, para que la espera se entienda.
    */
   link(): void {
     const code = this.childCode.trim();
@@ -135,6 +151,9 @@ export class ChildPanelComponent {
     }
     if (this.linking()) return;
 
+    const alreadyLinked = this.children().some(
+      (c) => c.linkedCode === normalizeLinkedCode(code),
+    );
     this.linking.set(true);
     this.catalog
       .linkChildByCode(code)
@@ -148,27 +167,37 @@ export class ChildPanelComponent {
           return;
         }
         this.childCode = '';
+        if (alreadyLinked) {
+          this.toast.show(`${child.name} ya estaba vinculado.`);
+          return;
+        }
+        // El hijo recién vinculado pasa a ser el seleccionado: es lo que el
+        // padre acaba de hacer y lo que quiere ver.
+        this.childId.set(child.id);
         this.toast.success(`Ahora sigues el progreso de ${child.name}.`);
         this.loadChildren();
       });
   }
 
-  /** Corta el vínculo: el padre deja de ver los datos del hijo. */
+  /** Corta el vínculo con el hijo que se está viendo, no con el primero. */
   askUnlink(): void {
-    if (this.unlinking() || !this.child()) return;
+    const child = this.child();
+    if (this.unlinking() || !child) return;
     this.unlinking.set(true);
     this.catalog
-      .unlinkChild()
+      .unlinkChild(child.linkedCode)
       .pipe(
         finalize(() => this.unlinking.set(false)),
         this.errors.catch('familia.desvincular', () => this.askUnlink()),
       )
       .subscribe(() => {
-        this.children.set([]);
+        this.toast.show(`Desvinculaste a ${child.name}. Ya no ves sus datos.`);
+        // El id desenlazado se limpia para que la recarga elija otro hijo en
+        // lugar de reseleccionar el que ya no existe.
+        this.childId.set(null);
         this.sessions.set([]);
         this.tutors.set([]);
-        this.childId.set(null);
-        this.toast.show('Desvinculaste a tu hijo. Ya no ves sus datos.');
+        this.loadChildren();
       });
   }
 

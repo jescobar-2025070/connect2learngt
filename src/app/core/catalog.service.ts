@@ -1,6 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, delay, map, of } from 'rxjs';
-import { SessionService } from './session.service';
+import {
+  LINKED_CODE_PATTERN,
+  SessionService,
+  normalizeLinkedCode,
+} from './session.service';
 import {
   ACCESS_HISTORY,
   ACHIEVEMENTS,
@@ -22,6 +26,8 @@ import {
   TUTORS,
   TUTOR_REVIEWS,
   buildSlots,
+  synthChildForCode,
+  synthSessionsForChild,
   groupChatFor,
   tutorChatFor,
 } from './mock-data';
@@ -447,42 +453,41 @@ export class CatalogService {
   // ---------------------------------------------------------------
 
   /**
-   * Hijos vinculados a la cuenta activa.
-   *
-   * No se busca por correo ni por nombre: se resuelve con el código de
-   * vinculación que el padre escribió (en el registro o en esta misma
-   * pantalla). Por eso un padre nuevo ve "sin hijo vinculado" en vez de los
-   * datos de un menor cualquiera.
+   * Hijos vinculados a la cuenta activa, uno por cada código que el padre
+   * escribió (al registrarse o desde su panel). Un código sin datos de ejemplo
+   * genera un hijo plausible, así que en la demo cualquier código con el
+   * formato correcto sirve.
    */
   getLinkedChildren(): Observable<ChildAccount[]> {
-    return this.mock(
-      CHILDREN.filter((c) => c.linkedCode === this.session.childCode()).map((c) => ({ ...c })),
-    );
+    return this.mock(this.session.linkedChildCodes().map((code) => this.childForCode(code)));
   }
 
   /**
-   * Valida un código y, si corresponde a un menor, lo guarda en la sesión.
-   * Un código que no existe devuelve `null`: la pantalla muestra el error en
-   * línea en vez de crear un vínculo falso.
+   * Resuelve un código y, si corresponde a un menor, lo vincula a la cuenta.
+   *
+   * Solo se rechaza lo que no es un código (`null`): el formato es lo único que
+   * se comprueba, porque en un prototipo no hay dónde verificar que ese código
+   * exista. La pantalla avisa antes de llamar, así que `null` aquí significa
+   * "esto no es un código", no "no encontré a nadie".
    */
   linkChildByCode(code: string): Observable<ChildAccount | null> {
-    const normalized = code.trim().toUpperCase();
+    const normalized = normalizeLinkedCode(code);
     return of(null).pipe(
       delay(1200),
       map(() => {
-        const child = CHILDREN.find((c) => c.linkedCode === normalized);
-        if (child) this.session.setChildCode(normalized);
-        return child ? { ...child } : null;
+        if (!LINKED_CODE_PATTERN.test(normalized)) return null;
+        this.session.addChildCode(normalized);
+        return this.childForCode(normalized);
       }),
     );
   }
 
-  /** Corta el vínculo: el padre deja de ver los datos del hijo. */
-  unlinkChild(): Observable<void> {
+  /** Corta el vínculo con un hijo concreto: el padre deja de ver sus datos. */
+  unlinkChild(code: string): Observable<void> {
     return of(void 0).pipe(
       delay(700),
       map(() => {
-        this.session.setChildCode(null);
+        this.session.removeChildCode(code);
       }),
     );
   }
@@ -492,14 +497,31 @@ export class CatalogService {
    * padre). Las que el padre agende durante la sesión se leen de
    * `SessionService.childBookings` y el panel las muestra junto a estas.
    */
-  getChildSessions(childId: string): Observable<Booking[]> {
+  getChildSessions(child: ChildAccount): Observable<Booking[]> {
     return this.mock(
-      CHILD_SESSIONS.filter((b) => b.forChildId === childId).map((b) => ({ ...b })),
+      this.storedSessions(child.id).length
+        ? this.storedSessions(child.id)
+        : synthSessionsForChild(child),
     );
   }
 
   /** Tutores con los que el hijo tiene sesiones, resueltos desde sus ids. */
   getChildTutors(child: ChildAccount): Tutor[] {
     return TUTORS.filter((t) => child.tutorIds.includes(t.id)).map((t) => ({ ...t }));
+  }
+
+  /** Sesiones escritas a mano en los datos de ejemplo, si las hay. */
+  private storedSessions(childId: string): Booking[] {
+    return CHILD_SESSIONS.filter((b) => b.forChildId === childId).map((b) => ({ ...b }));
+  }
+
+  /**
+   * El hijo de un código: primero se busca en los datos de ejemplo y, si no
+   * está, se genera. El mismo código devuelve siempre el mismo hijo, de modo
+   * que recargar no cambia lo que el padre tiene vinculado.
+   */
+  private childForCode(code: string): ChildAccount {
+    const stored = CHILDREN.find((c) => c.linkedCode === code);
+    return stored ? { ...stored } : synthChildForCode(code);
   }
 }
