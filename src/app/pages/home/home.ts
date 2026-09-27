@@ -15,7 +15,6 @@ import {
   Tutor,
 } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 import { VideoCallComponent } from '../../shared/video-call';
 
@@ -34,7 +33,7 @@ interface SearchResults {
 
 @Component({
   selector: 'app-home',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent, ModalComponent, VideoCallComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ModalComponent, VideoCallComponent],
   templateUrl: './home.html',
 })
 export class HomePage {

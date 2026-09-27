@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -34,6 +34,7 @@ export class RegisterPage {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly errors = inject(ErrorService);
+  private readonly injector = inject(Injector);
 
   readonly roles = ROLE_OPTIONS;
   /** Signal (no campo simple): los computed de abajo dependen de él. */
@@ -111,6 +112,49 @@ export class RegisterPage {
     this.role.set(role);
     // El rango de edad y los textos cambian por rol: se limpian los errores.
     this.submitted.set(false);
+  }
+
+  /**
+   * Flechas dentro del grupo de roles. Un `radiogroup` con varios `role="radio"`
+   * debe_expone una sola parada de tabulación: con los cuatro botones
+   * alcanzables, el teclado tiene que pasar por todos para elegir uno, y las
+   * flechas —que es lo que un grupo de este tipo promises— no hacían nada.
+   */
+  onRoleKeydown(event: KeyboardEvent, current: UserRole): void {
+    const ids = this.roles.map((r) => r.id);
+    const index = ids.indexOf(current);
+
+    let next: number | null = null;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        next = (index + 1) % ids.length;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        next = (index - 1 + ids.length) % ids.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = ids.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    // Las flechas seleccionan y enfocan a la vez, como manda el patrón.
+    event.preventDefault();
+    this.selectRole(ids[next]);
+    this.focusRole(ids[next]);
+  }
+
+  private focusRole(id: UserRole): void {
+    afterNextRender(
+      () => document.querySelector<HTMLElement>(`[data-role="${id}"]`)?.focus(),
+      { injector: this.injector },
+    );
   }
 
   submit(): void {

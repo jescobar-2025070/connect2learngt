@@ -3,9 +3,6 @@
     <app-icon name="arrowLeft" [size]="17" />
     Volver a tutores
   </a>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
 @if (loading()) {
@@ -13,7 +10,7 @@
     <span class="sr-only">Cargando el perfil del tutor…</span>
     <div class="card c8">
       <div class="skeleton circle"></div>
-      <div class="skeleton title" style="margin-top: 16px"></div>
+      <div class="skeleton title mt-4"></div>
       <div class="skeleton line"></div>
       <div class="skeleton line medium"></div>
     </div>
@@ -134,7 +131,7 @@
         </div>
 
         @if (children().length > 1) {
-          <div class="field" style="margin-top: 16px">
+          <div class="field mt-4">
             <label for="child">Para quién es la tutoría</label>
             <select id="child" name="child" class="input" [(ngModel)]="childId">
               @for (c of children(); track c.id) {
@@ -145,7 +142,7 @@
         }
       }
 
-      <div class="field" style="margin-top: 16px">
+      <div class="field mt-4">
         <label for="modality">Modalidad</label>
         <select id="modality" name="modality" class="input" [(ngModel)]="modality">
           <option>Videollamada</option>

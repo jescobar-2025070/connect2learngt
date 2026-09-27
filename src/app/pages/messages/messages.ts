@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, Injector, afterNextRender, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, tap } from 'rxjs';
@@ -8,12 +8,11 @@ import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { ChatMessage, Conversation } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { VideoCallComponent } from '../../shared/video-call';
 
 @Component({
   selector: 'app-messages',
-  imports: [FormsModule, IconComponent, ThemeToggleComponent, VideoCallComponent],
+  imports: [FormsModule, IconComponent, VideoCallComponent],
   templateUrl: './messages.html',
 })
 export class MessagesPage {
@@ -22,6 +21,7 @@ export class MessagesPage {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
+  private readonly injector = inject(Injector);
 
   readonly conversations = signal<Conversation[]>([]);
   readonly messages = signal<ChatMessage[]>([]);
@@ -29,6 +29,14 @@ export class MessagesPage {
   readonly loading = signal(true);
   readonly sending = signal(false);
   draft = '';
+
+  /**
+   * Qué panel se ve en móvil. En escritorio los dos caben de uno al lado del
+   * otro y la hoja de estilos muestra ambos, así que el valor solo cuenta por
+   * debajo de 760 px. Arranca en la lista: entrar en Mensajes debe permitir
+   * elegir conversación, no dejar caer al usuario dentro de un hilo al azar.
+   */
+  readonly mobilePane = signal<'list' | 'thread'>('list');
 
   // Hilos generados al llegar por enlace (chat de grupo o de tutor).
   private externalThreads = new Map<string, ChatMessage[]>();
@@ -80,6 +88,9 @@ export class MessagesPage {
       this.conversations.update((list) => [...list, conversation]);
     }
     this.activeId.set(conversation.id);
+    // Se llega aquí desde un enlace a un grupo o tutor concreto: el usuario ya
+    // ha elegido con qué hablar, así que en móvil se abre directamente el hilo.
+    this.mobilePane.set('thread');
     this.loadMessages();
   }
 
@@ -102,9 +113,29 @@ export class MessagesPage {
   }
 
   selectConversation(id: string): void {
-    if (this.activeId() === id) return;
+    if (this.activeId() === id) {
+      // Reabrir la conversación ya activa en móvil también debe sacar del
+      // panel de la lista: si no, el segundo toque parece no hacer nada.
+      this.mobilePane.set('thread');
+      return;
+    }
     this.activeId.set(id);
+    this.mobilePane.set('thread');
     this.loadMessages();
+  }
+
+  /** Vuelve al panel de conversaciones y devuelve el foco al hilo abierto. */
+  showList(): void {
+    this.mobilePane.set('list');
+    const id = this.activeId();
+    if (!id) return;
+    // Sin esto, el foco se pierde en un nodo suelto al desaparecer el hilo.
+    afterNextRender(
+      () => {
+        document.querySelector<HTMLElement>(`[data-conversation="${CSS.escape(id)}"]`)?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   private loadMessages(): void {

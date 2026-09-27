@@ -6,12 +6,19 @@ export interface ToastAction {
   run: () => void;
 }
 
+/**
+ * Los cuatro tonos del sistema de avisos. `info` y `success` confirman algo
+ * que ya ha pasado; `warning` y `error` requieren una decisión, y por eso el
+ * componente los presenta centrados en lugar de en la esquina.
+ */
+export type ToastTone = 'info' | 'success' | 'warning' | 'error';
+
 export interface Toast {
   id: number;
   /** Encabezado opcional: los avisos de error lo usan, los de éxito no. */
   title: string | null;
   text: string;
-  tone: 'info' | 'success' | 'error';
+  tone: ToastTone;
   action: ToastAction | null;
 }
 
@@ -36,6 +43,15 @@ export class ToastService {
 
   success(text: string): void {
     this.show(text, 'success');
+  }
+
+  /**
+   * Aviso de advertencia: la acción se completó pero con una consecuencia
+   * que conviene revisar. Comparte con los errores el tiempo de vida largo y
+   * la colocación centrada, pero no el color: no es un fallo.
+   */
+  warning(title: string, text: string, action?: ToastAction): void {
+    this.push({ title, text, tone: 'warning', action: action ?? null }, ERROR_MS);
   }
 
   /**

@@ -8,7 +8,6 @@
       <app-icon name="users" [size]="17" />
       Crear grupo
     </button>
-    <app-theme-toggle />
   </div>
 </div>
 
@@ -72,13 +71,12 @@
   </div>
 }
 
-<div class="actions" style="margin-bottom: 18px">
+<div class="chips mb-4">
   @for (s of subjects; track s) {
     <button
       type="button"
-      class="btn sm"
-      [class.alt]="activeSubject() === s"
-      [class.ghost]="activeSubject() !== s"
+      class="chip sm"
+      [attr.aria-pressed]="activeSubject() === s"
       (click)="selectSubject(s)"
     >
       {{ s }}

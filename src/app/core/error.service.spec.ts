@@ -9,12 +9,15 @@ import { ToastService } from './toast.service';
  *  - el fallo no llega al `subscribe` (una vista sin manejador no se rompe),
  *  - se avisa una sola vez y el aviso es el texto amigable, no el técnico,
  *  - el `finalize` de la pantalla sigue ejecutándose,
- *  - "Reintentar" solo se ofrece cuando repetir tiene sentido.
+ *  - "Reintentar" solo se ofrece cuando repetir tiene sentido,
+ *  - los fallos que dependen del usuario se anuncian como advertencia, no
+ *    como error.
  */
 describe('ErrorService', () => {
   let errors: ErrorService;
   let toasts: ToastService;
   let shown: Array<{ title: string; text: string; action?: { label: string; run: () => void } }>;
+  let tones: string[];
 
   beforeEach(() => {
     // `Injector.create` basta: el servicio solo depende del de avisos y no
@@ -23,10 +26,16 @@ describe('ErrorService', () => {
     errors = injector.get(ErrorService);
     toasts = injector.get(ToastService);
     shown = [];
+    tones = [];
     // Se espía el aviso en vez de leer el signal para no depender del render.
-    spyOn(toasts, 'error').and.callFake((title: string, text: string, action?: any) =>
-      shown.push({ title, text, action }),
-    );
+    // Los dos canales se recogen en la misma lista porque ambas rutas deben
+    // cumplir las mismas garantías, y `tones` conserva con cuál se emitió.
+    const record = (tone: string) => (title: string, text: string, action?: any) => {
+      tones.push(tone);
+      shown.push({ title, text, action });
+    };
+    spyOn(toasts, 'error').and.callFake(record('error') as any);
+    spyOn(toasts, 'warning').and.callFake(record('warning') as any);
     // `report` registra la traza: en una prueba eso sería ruido.
     spyOn(console, 'error');
   });
@@ -76,9 +85,33 @@ describe('ErrorService', () => {
   it('no propone reintentar un error que volvería a fallar igual', () => {
     for (const status of [401, 403, 404, 409]) {
       shown = [];
+      tones = [];
       errors.catch('pantalla', () => {})(throwError(() => ({ name: 'HttpErrorResponse', status }))).subscribe();
       expect(shown[0].action).withContext(`status ${status}`).toBeUndefined();
     }
+  });
+
+  it('trata como error una avería y como advertencia un fallo del usuario', () => {
+    // 500 y 503 son el sistema: no depende de nada que el usuario pueda hacer.
+    for (const status of [500, 503]) {
+      tones = [];
+      errors.report({ name: 'HttpErrorResponse', status }, 'pantalla');
+      expect(tones).withContext(`status ${status}`).toEqual(['error']);
+    }
+    // 403, 409 y 429 dependen de la acción del usuario: se avisa, pero no como
+    // avería, y con la misma sensación de "esto requiere tu atención".
+    for (const status of [403, 409, 429]) {
+      tones = [];
+      errors.report({ name: 'HttpErrorResponse', status }, 'pantalla');
+      expect(tones).withContext(`status ${status}`).toEqual(['warning']);
+    }
+  });
+
+  it('el aviso de advertencia también ofrece "Reintentar" cuando tiene sentido', () => {
+    errors.report({ name: 'HttpErrorResponse', status: 429 }, 'comunidad.publicar', { retry: () => {} });
+
+    expect(tones).toEqual(['warning']);
+    expect(shown[0].action?.label).toBe('Reintentar');
   });
 
   it('sin callback de reintento el aviso sigue, pero sin acción', () => {

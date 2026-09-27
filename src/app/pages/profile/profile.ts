@@ -6,7 +6,6 @@ import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 
 interface PrivacyOption {
@@ -18,7 +17,7 @@ interface PrivacyOption {
 
 @Component({
   selector: 'app-profile',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent, ModalComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ModalComponent],
   templateUrl: './profile.html',
 })
 export class ProfilePage {

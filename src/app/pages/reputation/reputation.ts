@@ -7,7 +7,6 @@ import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { Achievement, RewardEntry } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 
 interface TrackedStep {
@@ -35,7 +34,7 @@ const UNLOCK_STEPS: Record<string, TrackedStep[]> = {
 
 @Component({
   selector: 'app-reputation',
-  imports: [RouterLink, DecimalPipe, IconComponent, ThemeToggleComponent, ModalComponent],
+  imports: [RouterLink, DecimalPipe, IconComponent, ModalComponent],
   templateUrl: './reputation.html',
 })
 export class ReputationPage {

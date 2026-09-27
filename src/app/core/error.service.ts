@@ -1,7 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { EMPTY, MonoTypeOperatorFunction, catchError } from 'rxjs';
 import { ToastService } from './toast.service';
-import { ErrorCopyOverrides, UserErrorCopy, copyForKind, kindOf, statusOf } from './error-messages';
+import { ErrorCopyOverrides, ErrorKind, UserErrorCopy, copyForKind, kindOf, statusOf } from './error-messages';
+
+/**
+ * Fallos que dependen de lo que hizo el usuario, no del estado del sistema.
+ * Se anuncian como advertencia y no como error; el resto (red caída, sesión
+ * caducada, fallo del servidor) sí es una avería y se anuncia como error.
+ */
+const ADVISORY: ReadonlySet<ErrorKind> = new Set<ErrorKind>([
+  'validation',
+  'forbidden',
+  'conflict',
+  'rateLimit',
+]);
 
 /** Opciones de `ErrorService.report`. */
 export interface ReportOptions {
@@ -65,7 +77,15 @@ export class ErrorService {
 
     if (!options.silent) {
       const action = copy.retryable && options.retry ? { label: 'Reintentar', run: options.retry } : undefined;
-      this.toast.error(copy.title, copy.detail, action);
+      // No todo fallo es una alarma. Un 403, un 409 o un 429 significan que la
+      // acción no se completó por una razón que el usuario puede corregir: se
+      // presenta como advertencia, con el mismo peso y el mismo centro en
+      // pantalla, pero sin la alarma de "algo está roto".
+      if (ADVISORY.has(copy.kind)) {
+        this.toast.warning(copy.title, copy.detail, action);
+      } else {
+        this.toast.error(copy.title, copy.detail, action);
+      }
     }
     return copy;
   }

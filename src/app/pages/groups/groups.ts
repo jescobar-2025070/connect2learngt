@@ -7,7 +7,6 @@ import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { StudyGroup } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
 const SUBJECTS = [
   'Todas',
@@ -20,7 +19,7 @@ const SUBJECTS = [
 
 @Component({
   selector: 'app-groups',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, IconComponent],
   templateUrl: './groups.html',
 })
 export class GroupsPage {

@@ -8,14 +8,13 @@ import { ToastService } from '../../core/toast.service';
 import { ResourceItem } from '../../core/models';
 import { capabilitiesOf } from '../../core/permissions';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 
 const TYPES = ['Todos', 'PDF', 'Video', 'Guía', 'Ejercicios'];
 
 @Component({
   selector: 'app-resources',
-  imports: [FormsModule, IconComponent, ThemeToggleComponent, ModalComponent],
+  imports: [FormsModule, IconComponent, ModalComponent],
   templateUrl: './resources.html',
 })
 export class ResourcesPage {

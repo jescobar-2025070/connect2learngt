@@ -9,12 +9,11 @@ import { ToastService } from '../../core/toast.service';
 import { Booking, ChildAccount, Tutor, TutorReview, TutorSlot } from '../../core/models';
 import { capabilitiesOf } from '../../core/permissions';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 
 @Component({
   selector: 'app-tutor-detail',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent, ModalComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ModalComponent],
   templateUrl: './tutor-detail.html',
 })
 export class TutorDetailPage {

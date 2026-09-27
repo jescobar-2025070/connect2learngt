@@ -9,9 +9,6 @@
       }
     </p>
   </div>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
 @if (loading()) {
@@ -73,21 +70,21 @@
 
         <h2 class="sr-only">Sesiones agendadas</h2>
         @if (upcoming().length === 0) {
-          <div class="empty" style="margin-top: 12px">
+          <div class="empty mt-3">
             <p><strong>{{ kid.name }} no tiene sesiones agendadas.</strong></p>
             <p class="mini muted mt-0">Puedes buscar un tutor y agendarle la primera.</p>
           </div>
         } @else {
-          <div class="stack" style="margin-top: 12px">
+          <div class="stack mt-3">
             @for (b of upcoming(); track b.id) {
               <div class="row">
                 <span class="avatar" aria-hidden="true">{{ b.tutorInitials }}</span>
                 <span style="display: flex; align-items: center; gap: 12px; min-width: 0">
                   <strong>{{ b.subject }} con {{ b.tutorName }}</strong>
-                  <span class="mini muted" style="display: block">
+                  <span class="mini muted block">
                     {{ b.date }} · {{ b.time }} · {{ b.modality }}
                   </span>
-                  <span class="mini muted" style="display: block">{{ bookedByLabel(b) }}</span>
+                  <span class="mini muted block">{{ bookedByLabel(b) }}</span>
                 </span>
                 <span class="pill">{{ b.goal }}</span>
               </div>
@@ -125,7 +122,7 @@
           </div>
         </div>
 
-        <h2 class="mt-0" style="margin-top: 20px">Avance por materia</h2>
+        <h2 class="mt-5">Avance por materia</h2>
         <div class="subject-progress">
           @for (sp of kid.subjectProgress; track sp.subject) {
             <div class="subject-row">
@@ -159,7 +156,7 @@
                 <span class="avatar" aria-hidden="true">{{ t.initials }}</span>
                 <span>
                   <strong>{{ t.name }}</strong>
-                  <span class="mini muted" style="display: block">
+                  <span class="mini muted block">
                     {{ t.subjects.join(' · ') }} · {{ t.rating }}★
                   </span>
                 </span>
@@ -190,8 +187,7 @@
 
         <button
           type="button"
-          class="btn ghost block"
-          style="margin-top: 16px"
+          class="btn ghost block mt-4"
           (click)="openHistory()"
         >
           <app-icon name="eye" [size]="17" />
@@ -199,8 +195,7 @@
         </button>
         <button
           type="button"
-          class="btn ghost block"
-          style="margin-top: 8px"
+          class="btn ghost block mt-2"
           [disabled]="unlinking()"
           (click)="askUnlink()"
         >
@@ -281,7 +276,7 @@
 
 @if (showHistory()) {
   <app-modal [open]="true" title="Historial de accesos" (close)="showHistory.set(false)">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Actividad reciente de los accesos a los datos de tu hijo.
     </p>
     @if (historyLoading()) {
@@ -295,9 +290,9 @@
         @for (h of history(); track h.id) {
           <div class="history-item">
             <span class="ntf-icon" aria-hidden="true"><app-icon [name]="h.icon" [size]="17" /></span>
-            <div style="flex: 1; min-width: 0">
+            <div class="flex-1">
               <span>{{ h.text }}</span>
-              <span class="mini muted" style="display: block">{{ h.timeAgo }}</span>
+              <span class="mini muted block">{{ h.timeAgo }}</span>
             </div>
           </div>
         }

@@ -1,7 +1,12 @@
 <div class="shell">
   <div class="scrim" [class.show]="menuOpen()" (click)="closeMenu()" aria-hidden="true"></div>
 
-  <aside class="side" [class.open]="menuOpen()">
+  <aside
+    #side
+    class="side"
+    id="main-nav"
+    [class.open]="menuOpen()"
+  >
     <a class="brand" [routerLink]="startRoute()" (click)="closeMenu()">
       <app-icon name="resources" [size]="19" />
       <span>CONNECT2LEARN</span>
@@ -13,6 +18,7 @@
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
+          ariaCurrentWhenActive="page"
           [routerLinkActiveOptions]="{ exact: false }"
           (click)="closeMenu()"
         >
@@ -41,8 +47,9 @@
   </aside>
 
   <main class="content" id="main">
-    <div class="mobile-bar">
+    <div class="app-bar">
       <button
+        #menuBtn
         type="button"
         class="icon-btn nav-toggle"
         (click)="toggleMenu()"
@@ -52,7 +59,6 @@
       >
         <app-icon [name]="menuOpen() ? 'close' : 'menu'" [size]="20" />
       </button>
-      <span class="mobile-brand">CONNECT2LEARN</span>
       <app-theme-toggle />
     </div>
 

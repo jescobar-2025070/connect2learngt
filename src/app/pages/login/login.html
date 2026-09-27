@@ -63,10 +63,6 @@
         }
       </button>
 
-      <button type="button" class="btn ghost block" (click)="demoLogin()" [disabled]="loading()">
-        Entrar como Maria Lopez
-      </button>
-
       <button
         type="button"
         class="btn subtle block"
@@ -97,7 +93,7 @@
   <app-modal [open]="true" title="Recuperar contraseña" (close)="closeRecovery()">
     @if (recoverySent()) {
       <div class="center-text">
-        <span class="confirm-badge" style="margin-top: 8px" aria-hidden="true">
+        <span class="confirm-badge mt-2"  aria-hidden="true">
           <app-icon name="check" [size]="28" [strokeWidth]="2.6" />
         </span>
         <h2 class="mt-0">Revisa tu correo</h2>
@@ -108,7 +104,7 @@
         <button type="button" class="btn block" (click)="closeRecovery()">Entendido</button>
       </div>
     } @else {
-      <p class="muted mini" style="margin-top: 0">
+      <p class="muted mini mt-0">
         Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.
       </p>
       <div class="field">

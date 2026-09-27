@@ -6,7 +6,6 @@ import { ErrorService } from '../../core/error.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { AccessEntry, Guardian, SharingPreference } from '../../core/models';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 import { IconComponent } from '../../shared/icon';
 import { ChildPanelComponent } from './child-panel';
@@ -15,7 +14,6 @@ import { ChildPanelComponent } from './child-panel';
   selector: 'app-family',
   imports: [
     FormsModule,
-    ThemeToggleComponent,
     ModalComponent,
     IconComponent,
     ChildPanelComponent,

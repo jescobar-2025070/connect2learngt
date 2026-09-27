@@ -22,9 +22,12 @@
               type="button"
               class="role-card"
               role="radio"
+              [attr.data-role]="option.id"
               [attr.aria-checked]="role() === option.id"
               [class.selected]="role() === option.id"
+              [attr.tabindex]="role() === option.id ? 0 : -1"
               (click)="selectRole(option.id)"
+              (keydown)="onRoleKeydown($event, option.id)"
             >
               <span class="role-ico"><app-icon [name]="option.icon" [size]="19" /></span>
               <span class="role-body">

@@ -3,9 +3,6 @@
     <h1>Mi perfil</h1>
     <p class="muted mt-0">Tu información como estudiante.</p>
   </div>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
 @if (student(); as s) {
@@ -20,7 +17,7 @@
         </div>
       </div>
 
-      <div class="fact-grid" style="margin-top: 20px">
+      <div class="fact-grid mt-5">
         <div>
           <span class="mini muted">Edad</span>
           <strong>{{ s.age }} años</strong>
@@ -42,7 +39,7 @@
       </div>
 
       @if (!isParent()) {
-        <div class="linked-code" style="margin-top: 20px">
+        <div class="linked-code mt-5">
           <div>
             <strong>Código de vinculación</strong>
             <p class="mini muted mt-0">
@@ -65,7 +62,7 @@
         </div>
       }
 
-      <div class="section-head" style="margin-top: 20px">
+      <div class="section-head mt-5">
         <h3 class="mt-0">Tus intereses</h3>
         <a class="btn ghost sm" routerLink="/intereses">Editar</a>
       </div>
@@ -175,7 +172,7 @@
 
 @if (showPassword()) {
   <app-modal [open]="true" title="Cambiar contraseña" (close)="showPassword.set(false)">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Simulamos el flujo real: valida la contraseña actual y guarda la nueva.
     </p>
     <div class="field">
@@ -230,7 +227,7 @@
 
 @if (showPrivacy()) {
   <app-modal [open]="true" title="Configuración de privacidad" (close)="showPrivacy.set(false)">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Controla quién puede ver tus datos y tu actividad en la comunidad.
     </p>
     @for (p of privacyOptions(); track p.id) {

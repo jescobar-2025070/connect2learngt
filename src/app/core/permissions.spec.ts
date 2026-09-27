@@ -1,4 +1,5 @@
 import { canAccessSection, capabilitiesOf, SECTION_ROLES, SectionKey } from './permissions';
+import { ROLE_OPTIONS } from './models';
 
 /**
  * Lo que garantiza la matriz de permisos:
@@ -7,6 +8,13 @@ import { canAccessSection, capabilitiesOf, SECTION_ROLES, SectionKey } from './p
  *  - el estudiante y el tutor no pierden nada de lo que ya tenían,
  *  - la matriz no depende de la sección: cada sección se decide por su propia
  *    lista de roles, así que añadir una sección obliga a declararla.
+ *
+ * Ojo con `intereses`: no es una sección de usuario final, es el paso de
+ * onboarding que precede al shell y al que `onboardingGuard` manda a cualquiera
+ * sin intereses guardados. Solo el padre se lo salta, porque se vincula a su
+ * hijo con un código en vez de elegir materias. Por eso el tutor entra y la
+ * familia no: negar `intereses` al tutor no sería restrictivo, lo dejaría en un
+ * bucle de redirección entre `/app` y `/intereses`.
  */
 describe('permisos por rol', () => {
   describe('canAccessSection', () => {
@@ -50,13 +58,19 @@ describe('permisos por rol', () => {
       }
     });
 
-    it('no deja al tutor en las secciones de usuario final', () => {
+    it('le deja al tutor su panel y le cierra la familiar', () => {
       expect(canAccessSection('tutor', 'inicio')).toBe(true);
       expect(canAccessSection('tutor', 'tutores')).toBe(true);
       expect(canAccessSection('tutor', 'comunidad')).toBe(true);
       expect(canAccessSection('tutor', 'recursos')).toBe(true);
+      // `familia` es la única sección de usuario final que el tutor no ve: la
+      // gestión del hijo es del padre.
       expect(canAccessSection('tutor', 'familia')).toBe(false);
-      expect(canAccessSection('tutor', 'intereses')).toBe(false);
+      // Y el onboarding sí lo ve. `intereses` no es una sección de usuario
+      // final, es el paso previo al shell al que `onboardingGuard` manda a
+      // cualquier cuenta sin intereses guardados, así que un tutor al que se le
+      // negara rebotaría entre `/app` y `/intereses` para siempre.
+      expect(canAccessSection('tutor', 'intereses')).toBe(true);
     });
 
     it('deniega una sección que no exista en la matriz', () => {
@@ -72,6 +86,22 @@ describe('permisos por rol', () => {
         expect(roles.length)
           .withContext(`${section} no declara ningún rol: nadie podría entrar`)
           .toBeGreaterThan(0);
+      }
+    });
+
+    it('deja entrar a /intereses a todo rol cuyo onboarding no es vinculación', () => {
+      // Este es el invariante que sostiene la matriz, y el que hace que
+      // `models.ts`, `permissions.ts` y `auth.guard.ts` no puedan separarse:
+      // `onboardingGuard` manda a /intereses a cualquier cuenta sin intereses
+      // guardados, así que ese paso tiene que ser alcanzable para todo rol que
+      // no opte por vincularse a un hijo. Si la matriz y el onboarding se
+      // contradicen, el guard y el guard de sección se pisan y la cuenta entra
+      // en bucle; aquí se ve antes de que llegue al navegador.
+      for (const { id, onboarding, label } of ROLE_OPTIONS) {
+        const esperado = onboarding !== 'vinculacion';
+        expect(canAccessSection(id, 'intereses'))
+          .withContext(`${label} (onboarding: ${onboarding})`)
+          .toBe(esperado);
       }
     });
   });

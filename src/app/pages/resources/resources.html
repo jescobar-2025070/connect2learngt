@@ -9,15 +9,14 @@
       }
     </p>
   </div>
-  <div class="top-actions">
-    @if (canUpload()) {
+  @if (canUpload()) {
+    <div class="top-actions">
       <button type="button" class="btn" (click)="openUpload()">
         <app-icon name="upload" [size]="17" [strokeWidth]="2" />
         Subir recurso
       </button>
-    }
-    <app-theme-toggle />
-  </div>
+    </div>
+  }
 </div>
 
 <div class="card resources-toolbar">
@@ -32,13 +31,12 @@
       (ngModelChange)="query.set($event)"
     />
   </div>
-  <div class="actions" style="margin-top: 12px">
+  <div class="chips mt-3">
     @for (type of types; track type) {
       <button
         type="button"
-        class="btn sm"
-        [class.alt]="activeType() === type"
-        [class.ghost]="activeType() !== type"
+        class="chip sm"
+        [attr.aria-pressed]="activeType() === type"
         (click)="selectType(type)"
       >
         {{ type }}
@@ -98,7 +96,7 @@
 
 @if (showUpload()) {
   <app-modal [open]="true" title="Subir un recurso" (close)="closeUpload()">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Comparte material de estudio con la comunidad.
     </p>
     <form class="form" (ngSubmit)="submitUpload()">

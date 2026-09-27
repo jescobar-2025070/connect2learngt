@@ -1,4 +1,15 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { roleOption } from '../../core/models';
 import { SectionKey, canAccessSection } from '../../core/permissions';
@@ -6,6 +17,9 @@ import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../shared/icon';
 import { ThemeToggleComponent } from '../../shared/theme-toggle';
+
+/** Elementos que pueden recibir foco dentro del cajón de navegación. */
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface NavItem {
   section: SectionKey;
@@ -59,12 +73,98 @@ export class ShellPage {
   /** Etiqueta bajo el nombre: el padre no tiene grado, así que va su rol. */
   readonly sideSubtitle = computed(() => this.student()?.grade || this.roleLabel());
 
-  toggleMenu(): void {
-    this.menuOpen.update((v) => !v);
+  private readonly side = viewChild<ElementRef<HTMLElement>>('side');
+  private readonly menuBtn = viewChild<ElementRef<HTMLButtonElement>>('menuBtn');
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+
+  /**
+   * El cajón solo se solapa con el contenido por debajo de 760 px, que es el
+   * mismo punto de corte que usa `.side` en la hoja de estilos. Saberlo aquí
+   * evita mover el foco o atrapar el tabulado en un menú que no se solapa con
+   * nada, porque en escritorio el menú siempre está visible.
+   */
+  private readonly narrowQuery = window.matchMedia('(max-width: 760px)');
+  private readonly isNarrow = signal(this.narrowQuery.matches);
+
+  constructor() {
+    const onChange = (e: MediaQueryListEvent) => {
+      this.isNarrow.set(e.matches);
+      // Al pasar a escritorio el cajón deja de ser superposición: se cierra.
+      if (!e.matches) this.menuOpen.set(false);
+    };
+    this.narrowQuery.addEventListener('change', onChange);
+    this.destroyRef.onDestroy(() => this.narrowQuery.removeEventListener('change', onChange));
   }
 
-  closeMenu(): void {
+  /** El cajón está superpuesto: solo entonces se queda el foco dentro. */
+  private get drawerIsOverlay(): boolean {
+    return this.isNarrow() && this.menuOpen();
+  }
+
+  toggleMenu(): void {
+    if (this.menuOpen()) {
+      this.closeMenu();
+      return;
+    }
+    this.menuOpen.set(true);
+    // El foco entra en el primer enlace: sin esto, el teclado sigue en el
+    // botón del menú y el usuario no tiene forma de alcanzar la navegación.
+    // Se espera al render porque el cajón cerrado es `visibility: hidden`, y
+    // sobre un elemento así el foco se pierde en silencio.
+    afterNextRender(() => this.focusFirstInDrawer(), { injector: this.injector });
+  }
+
+  /**
+   * @param restoreFocus `true` cuando el cierre no viene de pulsar un enlace
+   *   (Escape o el propio botón). Si el menú se cierra porque el usuario ha
+   *   elegido una sección, devolverle el foco al botón lo sacaría de la página
+   *   que acaba de abrir.
+   */
+  closeMenu(restoreFocus = false): void {
     this.menuOpen.set(false);
+    if (restoreFocus) this.menuBtn()?.nativeElement.focus();
+  }
+
+  /**
+   * Se escucha en el documento, no en el cajón: Escape debe cerrar el menú
+   * aunque el foco esté en el velo, en un enlace o en el propio botón. Y Tab
+   * queda atrapado mientras el menú se solapa con el contenido; si no, el
+   * tabulador se pasea por una página que sigue visible detrás.
+   */
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.drawerIsOverlay) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMenu(true);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const root = this.side()?.nativeElement;
+    if (!root) return;
+
+    const focusable = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || active === root)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  private focusFirstInDrawer(): void {
+    const root = this.side()?.nativeElement;
+    root?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
   }
 
   comingSoon(feature: string): void {

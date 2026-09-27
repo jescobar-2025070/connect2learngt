@@ -6,11 +6,10 @@ import { ErrorService } from '../../core/error.service';
 import { ToastService } from '../../core/toast.service';
 import { GroupMember, StudyGroup } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
 @Component({
   selector: 'app-group-detail',
-  imports: [RouterLink, IconComponent, ThemeToggleComponent],
+  imports: [RouterLink, IconComponent],
   templateUrl: './group-detail.html',
 })
 export class GroupDetailPage {

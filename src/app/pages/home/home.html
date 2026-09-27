@@ -15,7 +15,6 @@
     >
       <app-icon name="bell" [size]="19" />
     </button>
-    <app-theme-toggle />
   </div>
 </div>
 
@@ -118,7 +117,7 @@
       <div class="row">
         <div>
           <span class="pill brand">{{ s.recommendedResource.subject }}</span>
-          <h3 class="mt-0" style="margin-top: 8px">{{ s.recommendedResource.title }}</h3>
+          <h3 class="mt-2">{{ s.recommendedResource.title }}</h3>
           <p class="muted mini mt-0">{{ s.recommendedResource.description }}</p>
         </div>
         <a class="btn alt" routerLink="/app/recursos">Ver material</a>
@@ -146,7 +145,7 @@
     </section>
 
     <section class="card c4 center-text" aria-labelledby="featured-tutor-title">
-      <span class="avatar xl" style="margin: 0 auto" aria-hidden="true">
+      <span class="avatar xl mx-auto"  aria-hidden="true">
         {{ s.featuredTutor.initials }}
       </span>
       <p class="rating" style="margin-top: 10px">
@@ -275,7 +274,7 @@
 
 @if (notifOpen()) {
   <app-modal [open]="true" title="Notificaciones" (close)="notifOpen.set(false)">
-    <div class="section-head" style="margin-bottom: 4px">
+    <div class="section-head mb-1">
       <p class="muted mini mt-0" style="margin: 0">
         @if (hasUnread) {
           Tienes avisos sin leer.
@@ -322,7 +321,7 @@
 
 @if (materialsOpen()) {
   <app-modal [open]="true" title="Materiales de la sesión" (close)="materialsOpen.set(false)">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Recursos sugeridos para preparar tu próxima tutoría.
     </p>
     <div class="session-materials">
@@ -334,9 +333,9 @@
         @for (r of materials(); track r.id) {
           <div class="material-row">
             <app-icon name="download" [size]="18" />
-            <div style="flex: 1; min-width: 0">
+            <div class="flex-1">
               <strong>{{ r.title }}</strong>
-              <span class="mini muted" style="display: block">
+              <span class="mini muted block">
                 {{ r.subject }} · {{ r.type }} · {{ r.minutes }} min
               </span>
             </div>

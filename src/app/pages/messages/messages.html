@@ -3,18 +3,16 @@
     <h1>Mensajes</h1>
     <p class="muted mt-0">Coordina con tus tutores y grupos de estudio.</p>
   </div>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
-<div class="chat-layout card">
+<div class="chat-layout card" [attr.data-view]="mobilePane()">
   <aside class="chat-list" aria-label="Conversaciones">
     @for (c of conversations(); track c.id) {
       <button
         type="button"
         class="chat-item"
         [class.active]="activeId() === c.id"
+        [attr.data-conversation]="c.id"
         (click)="selectConversation(c.id)"
       >
         <span class="avatar" aria-hidden="true">{{ c.initials }}</span>
@@ -31,23 +29,34 @@
           }
         </span>
       </button>
+    } @empty {
+      <p class="empty">Todavía no tienes conversaciones.</p>
     }
   </aside>
 
   <section class="chat-thread">
     @if (activeConversation; as conv) {
       <div class="chat-thread-head">
+        <!-- Solo en móvil: la lista y el hilo no caben a la vez, así que este
+             botón es la única forma de volver a cambiar de conversación. -->
+        <button
+          type="button"
+          class="icon-btn chat-back"
+          (click)="showList()"
+          aria-label="Volver a las conversaciones"
+        >
+          <app-icon name="arrowLeft" [size]="18" />
+        </button>
         <span class="avatar" aria-hidden="true">{{ conv.initials }}</span>
-        <div>
-          <strong>{{ conv.name }}</strong>
+        <div class="flex-1">
+          <strong class="truncate">{{ conv.name }}</strong>
           <p class="mini muted mt-0">Conversación activa</p>
         </div>
         <button
           type="button"
           class="icon-btn"
-          style="margin-left: auto"
           (click)="openCall()"
-          aria-label="Iniciar videollamada"
+          aria-label="Iniciar videollamada con {{ conv.name }}"
         >
           <app-icon name="video" [size]="18" />
         </button>
@@ -93,6 +102,8 @@
           }
         </button>
       </form>
+    } @else {
+      <p class="empty">Elige una conversación para ver los mensajes.</p>
     }
   </section>
 </div>

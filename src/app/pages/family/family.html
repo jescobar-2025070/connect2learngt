@@ -6,9 +6,6 @@
     <h1>{{ pageTitle }}</h1>
     <p class="muted mt-0">{{ pageSubtitle }}</p>
   </div>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
 @if (loading()) {
@@ -33,7 +30,7 @@
       </p>
 
       @if (guardians().length === 0) {
-        <div class="empty" style="margin-top: 12px">
+        <div class="empty mt-3">
           {{ emptyHint }}
         </div>
       } @else {
@@ -141,8 +138,7 @@
 
       <button
         type="button"
-        class="btn ghost block"
-        style="margin-top: 16px"
+        class="btn ghost block mt-4"
         (click)="openHistory()"
       >
         <app-icon name="eye" [size]="17" />
@@ -154,7 +150,7 @@
 
 @if (showHistory()) {
   <app-modal [open]="true" title="Historial de accesos" (close)="showHistory.set(false)">
-    <p class="muted mini" style="margin-top: 0">
+    <p class="muted mini mt-0">
       Actividad reciente de los accesos a tu cuenta.
     </p>
     @if (historyLoading()) {
@@ -169,9 +165,9 @@
         @for (h of history(); track h.id) {
           <div class="history-item">
             <span class="ntf-icon" aria-hidden="true"><app-icon [name]="h.icon" [size]="17" /></span>
-            <div style="flex: 1; min-width: 0">
+            <div class="flex-1">
               <span>{{ h.text }}</span>
-              <span class="mini muted" style="display: block">{{ h.timeAgo }}</span>
+              <span class="mini muted block">{{ h.timeAgo }}</span>
             </div>
           </div>
         }

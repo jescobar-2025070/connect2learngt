@@ -9,13 +9,12 @@ import { ToastService } from '../../core/toast.service';
 import { CommunityPost, CommunityReply } from '../../core/models';
 import { capabilitiesOf } from '../../core/permissions';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
 const TOPICS = ['General', 'Matemáticas', 'Ciencias', 'Inglés', 'Literatura', 'Programación'];
 
 @Component({
   selector: 'app-community',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, IconComponent],
   templateUrl: './community.html',
 })
 export class CommunityPage {

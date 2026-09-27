@@ -9,15 +9,14 @@
     }
   </p>
   </div>
-  <div class="top-actions">
-    @if (!readOnly()) {
+  @if (!readOnly()) {
+    <div class="top-actions">
       <a class="btn ghost" routerLink="/app/grupos">
         <app-icon name="users" [size]="17" />
         Ver grupos de estudio
       </a>
-    }
-    <app-theme-toggle />
-  </div>
+    </div>
+  }
 </div>
 
 <div class="grid">
@@ -50,18 +49,20 @@
       </div>
     </div>
     } @else {
-      <div class="notice" role="note" style="margin-bottom: 4px">
+      <div class="notice mb-1" role="note">
         <app-icon name="eye" [size]="17" />
         <span>Estás viendo la comunidad en modo lectura: no puedes publicar ni responder.</span>
       </div>
     }
 
-    <div class="actions" style="margin: 16px 0">
+    <!-- Filtro de un solo eje: son dos opciones excluyentes, no dos acciones.
+         Por eso son chips conmutables (`aria-pressed`) y no botones: el lector
+         de pantalla anuncia cuál está activa. -->
+    <div class="chips mb-4">
       <button
         type="button"
-        class="btn"
-        [class.alt]="filter() === 'recent'"
-        [class.ghost]="filter() !== 'recent'"
+        class="chip"
+        [attr.aria-pressed]="filter() === 'recent'"
         (click)="setFilter('recent')"
       >
         Recientes
@@ -69,8 +70,8 @@
       @if (!readOnly()) {
         <button
           type="button"
-          class="btn ghost"
-          [class.alt]="filter() === 'mine'"
+          class="chip"
+          [attr.aria-pressed]="filter() === 'mine'"
           (click)="setFilter('mine')"
         >
           Mis publicaciones
@@ -85,7 +86,7 @@
           <div class="card post-card">
             <div class="post-head">
               <div class="skeleton circle" style="width:42px;height:42px"></div>
-              <div style="flex: 1">
+              <div class="flex-1">
                 <div class="skeleton line short"></div>
               </div>
             </div>

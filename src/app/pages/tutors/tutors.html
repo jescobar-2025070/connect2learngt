@@ -5,9 +5,6 @@
       Educadores verificados, listos para ayudarte a alcanzar tus metas de aprendizaje.
     </p>
   </div>
-  <div class="top-actions">
-    <app-theme-toggle />
-  </div>
 </div>
 
 <div class="grid">
@@ -66,7 +63,7 @@
           <span>Aplicar filtros</span>
         }
       </button>
-      <button type="button" class="btn ghost block" style="margin-top: 8px" (click)="clearFilters()">
+      <button type="button" class="btn ghost block mt-2"  (click)="clearFilters()">
         Limpiar filtros
       </button>
     </form>
@@ -79,7 +76,7 @@
       @for (i of [1, 2, 3]; track i) {
         <div class="card tutor-card">
           <div class="skeleton circle"></div>
-          <div style="flex: 1">
+          <div class="flex-1">
             <div class="skeleton title"></div>
             <div class="skeleton line"></div>
             <div class="skeleton line short"></div>

@@ -46,10 +46,26 @@ html[data-theme='light'] {
   --shadow-sm: 0 1px 2px rgba(80, 48, 20, 0.07);
   --shadow-md: 0 2px 6px rgba(80, 48, 20, 0.09);
   --shadow-lg: 0 6px 16px rgba(80, 48, 20, 0.12);
+  /* Sombras de superficies flotantes (avisos, diálogos): necesitan separarse
+     del fondo, así que llevan difuminado más amplio. */
+  --shadow-float: 0 12px 32px rgba(80, 48, 20, 0.18);
 
   --radius-sm: 6px;
   --radius: 8px;
   --radius-lg: 12px;
+
+  /* Superficie translúcida para elementos que flotan sobre contenido real
+     (avisos). El alpha es alto a propósito: el desenfoque es un extra, nunca
+     un sustituto del contraste. */
+  --surface-glass: rgba(255, 253, 248, 0.86);
+
+  /* Velo de los overlays. Vive como token para que el tema oscuro no herede
+     el marrón fijo del tema claro. */
+  --overlay: rgba(51, 32, 15, 0.5);
+  --overlay-strong: rgba(51, 32, 15, 0.62);
+
+  --blur-sm: 6px;
+  --blur-md: 14px;
 
   color-scheme: light;
 }
@@ -86,8 +102,47 @@ html[data-theme='dark'] {
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+  --surface-glass: rgba(33, 26, 20, 0.88);
+
+  --overlay: rgba(12, 8, 5, 0.62);
+  --overlay-strong: rgba(12, 8, 5, 0.74);
 
   color-scheme: dark;
+}
+
+/* ---------- shared tokens ---------- */
+/* Tokens que no cambian con el tema: movimiento, capas, área táctil y la
+   tipografía monoespaciada de los códigos de vinculación. */
+:root {
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --dur-fast: 0.14s;
+  --dur: 0.2s;
+  --dur-slow: 0.28s;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Escala de capas. Evita que dos overlays distintos se pisen por escritorio:
+     el orden real es scrim < navegación < modal < overlay a pantalla completa
+     < avisos, y los avisos van los últimos porque tienen que verse siempre. */
+  --z-scrim: 25;
+  --z-nav: 30;
+  --z-skip: 100;
+  --z-modal-backdrop: 150;
+  --z-modal: 160;
+  --z-fullscreen: 300;
+  --z-toast: 500;
+
+  /* La barra superior se queda por debajo del velo y del cajón a propósito: al
+     abrir el menú tiene que quedar detrás del scrim, no atravesarlo. */
+  --z-bar: 20;
+
+  /* Área táctil mínima. Los controles con texto la cumplen solos por padding;
+     los cuadrados (iconos, casillas) se dimensionan contra este valor. */
+  --tap: 44px;
+  --tap-sm: 40px;
 }
 
 /* ---------- base ---------- */
@@ -109,21 +164,89 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   transition:
-    background-color 0.28s ease,
-    color 0.28s ease;
+    background-color var(--dur-slow) var(--ease),
+    color var(--dur-slow) var(--ease);
 }
 
+/* El scroll del documento lo bloquean los overlays (diálogo, videollamada,
+   menú lateral en móvil). Se compensa con el ancho de la barra para que el
+   contenido no dé un salto lateral al abrirse cualquiera de ellos. */
+body.scroll-locked {
+  overflow: hidden;
+}
+
+/* Una sola definición de "esto reacciona": color, borde, sombra y, en los
+   controles pulsables, una compresión mínima al pulsar. Así ningún componente
+   necesita declarar su propia transición. */
 .card,
 .side,
 .input,
 .btn,
 .pill,
 .chip,
-.icon-btn {
+.icon-btn,
+.notice,
+.switch,
+.nav a,
+.row,
+.post-action,
+.chat-item,
+.search-item,
+.topic-chip,
+.role-card,
+.slot,
+.step {
   transition:
-    background-color 0.28s ease,
-    border-color 0.28s ease,
-    color 0.28s ease;
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.btn,
+.chip,
+.icon-btn,
+.post-action,
+.slot,
+.role-card,
+.topic-chip,
+.link-btn,
+.chat-item,
+.search-item,
+.nav a,
+.switch {
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/* Compresión al pulsar: el gesto confirma el toque en táctil y en el botón
+   del ratón a la vez. Se anula en táctil, donde el sistema ya dibuja su
+   propio destello y este gesto solo añadiría retardo visual. */
+.btn:active:not(:disabled),
+.chip:active:not(:disabled),
+.icon-btn:active:not(:disabled),
+.slot:active:not(:disabled),
+.role-card:active:not(:disabled),
+.topic-chip:active:not(:disabled),
+.post-action:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+@media (hover: none) {
+  .btn:active:not(:disabled),
+  .chip:active:not(:disabled),
+  .icon-btn:active:not(:disabled),
+  .slot:active:not(:disabled),
+  .role-card:active:not(:disabled),
+  .topic-chip:active:not(:disabled),
+  .post-action:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -144,6 +267,10 @@ h4 {
   margin: 0 0 8px;
   line-height: 1.25;
   letter-spacing: -0.01em;
+  /* Un título nunca debe romper la retícula ni desbordar la tarjeta que lo
+     contiene: los nombres largos (tutores, grupos, hijos) se reparten en dos
+     líneas antes que empujar el layout. */
+  overflow-wrap: break-word;
 }
 h1 {
   font-size: 1.75rem;
@@ -157,11 +284,22 @@ h3 {
   font-size: 1rem;
   font-weight: 700;
 }
+h4 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
 p {
   margin: 0 0 10px;
+  overflow-wrap: break-word;
 }
 a {
   color: var(--brand);
+  text-underline-offset: 2px;
+}
+/* El cuerpo de un párrafo se lee mejor con un interlineado algo más suelto
+   que el de la interfaz; los bloques cortos conservan 1.55. */
+p {
+  line-height: 1.6;
 }
 
 .muted {
@@ -180,18 +318,114 @@ a {
   margin-top: 0;
 }
 
-/* ---------- focus (keyboard) ---------- */
+/* ---------- utilities ----------
+   Escala de espaciado sobre una retícula de 4px. Existe para que el hueco
+   entre dos elementos se escriba una sola vez y no como un `style` suelto en
+   cada plantilla: así cualquier ajuste futuro se hace en un único sitio. */
+:root {
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+}
+
+.mt-0 {
+  margin-top: 0;
+}
+.mt-1 {
+  margin-top: var(--sp-1);
+}
+.mt-2 {
+  margin-top: var(--sp-2);
+}
+.mt-3 {
+  margin-top: var(--sp-3);
+}
+.mt-4 {
+  margin-top: var(--sp-4);
+}
+.mt-5 {
+  margin-top: var(--sp-5);
+}
+.mt-6 {
+  margin-top: var(--sp-6);
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-1 {
+  margin-bottom: var(--sp-1);
+}
+.mb-2 {
+  margin-bottom: var(--sp-2);
+}
+.mb-3 {
+  margin-bottom: var(--sp-3);
+}
+.mb-4 {
+  margin-bottom: var(--sp-4);
+}
+.mb-5 {
+  margin-bottom: var(--sp-5);
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.block {
+  display: block;
+}
+
+/* Rejilla de laying-out: el patrón "avatar + textos + acción a la derecha"
+   se repite en el tutor, el hijo, el grupo y el historial. Estas clases lo
+   resuelven una vez y además fijan `min-width: 0`, sin el cual el texto
+   largo empuja el botón fuera de la tarjeta. */
+.flex {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+/* Empuja un elemento al final de una fila flexible. Sustituye al
+   `style="margin-left:auto"` que se repetía en plantillas para dejar la
+   acción pegada al borde derecho de la tarjeta. */
+.push {
+  margin-left: auto;
+}
+.min-w-0 {
+  min-width: 0;
+}
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Agrupa etiquetas pequeñas en columna (correo, fecha, descripción) sin
+   repetir el `display:block` inline en cada plantilla. */
+.sub {
+  display: block;
+  min-width: 0;
+}
+
+/* ---------- focus (keyboard) ----------
+   El contorno sigue el `border-radius` real del elemento, así que un mismo
+   anillo sirve para un chip redondeado, un botón o una tarjeta sin deformar
+   ninguno al enfocarlo. */
 :focus-visible {
   outline: 3px solid var(--brand);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 .skip-link {
   position: absolute;
   left: -9999px;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-skip);
   background: var(--brand);
   color: var(--brand-ink);
   padding: 10px 16px;
@@ -221,7 +455,7 @@ a {
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  min-height: 44px;
+  min-height: var(--tap);
   border: 1px solid transparent;
   border-radius: var(--radius);
   background: var(--brand);
@@ -236,9 +470,11 @@ a {
 .btn:hover:not(:disabled) {
   background: var(--brand-hover);
 }
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+/* En brand los bordes de marca sobran: solo se distingue el borde cuando el
+   fondo es transparente. */
+.btn.ghost,
+.btn.subtle {
+  border-color: var(--line-strong);
 }
 .btn.alt {
   background: var(--gold);
@@ -250,22 +486,26 @@ a {
 .btn.ghost {
   background: transparent;
   color: var(--brand);
-  border-color: var(--line-strong);
 }
 .btn.ghost:hover:not(:disabled) {
   background: var(--surface-2);
+  border-color: var(--brand);
 }
 .btn.subtle {
   background: var(--surface-2);
   color: var(--ink);
-  border-color: var(--line);
 }
 .btn.subtle:hover:not(:disabled) {
   background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .btn.sm {
   padding: 7px 12px;
-  min-height: 36px;
+  min-height: var(--tap-sm);
   font-size: 0.875rem;
 }
 .btn.block {
@@ -275,8 +515,9 @@ a {
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: var(--tap);
+  height: var(--tap);
+  flex: none;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--surface);
@@ -285,6 +526,15 @@ a {
 }
 .icon-btn:hover {
   background: var(--surface-2);
+  border-color: var(--brand);
+}
+.icon-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.icon-btn.sm {
+  width: 36px;
+  height: 36px;
 }
 
 .actions {
@@ -292,6 +542,12 @@ a {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 14px;
+}
+.actions.end {
+  justify-content: flex-end;
+}
+.actions.center {
+  justify-content: center;
 }
 
 /* ---------- cards & surfaces ---------- */
@@ -307,6 +563,12 @@ a {
 }
 .card.tinted {
   background: var(--surface-2);
+}
+/* Sin padding: para superficies que contienen su propia rejilla (el chat
+   gestiona su propio aire con los dos paneles). */
+.card.bare {
+  padding: 0;
+  overflow: hidden;
 }
 
 a.card,
@@ -335,6 +597,21 @@ html[data-theme='dark'] .hero {
   border-color: var(--line);
   color: var(--ink);
 }
+/* El hero invierte la jerarquía: su texto es `ink` sobre un fondo cálido, así
+   que los subtítulos y notas se aclaran en lugar de usar el `muted` global. */
+.hero .muted,
+.hero .eyebrow {
+  color: inherit;
+  opacity: 0.82;
+}
+.hero .btn {
+  background: var(--surface);
+  color: var(--gold-ink);
+  border-color: transparent;
+}
+.hero .btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
 
 .section-head {
   display: flex;
@@ -350,6 +627,12 @@ html[data-theme='dark'] .hero {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 18px;
+}
+/* Sin esto, un hijo con contenido ancho (un nombre largo sin espacios, un
+   `<pre>`, una tabla) ensancha la columna y empuja el scroll horizontal a
+   toda la página. */
+.grid > * {
+  min-width: 0;
 }
 .c12 {
   grid-column: span 12;
@@ -391,14 +674,37 @@ label,
   padding: 11px 12px;
   font: inherit;
   font-size: 0.9375rem;
-  min-height: 44px;
+  min-height: var(--tap);
+  /* `16px` en móvil: por debajo, iOS Safari hace zoom al enfocar el campo y
+     la página se descuelga del lugar donde estaba el usuario. */
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
 }
 .input::placeholder {
   color: var(--muted);
+  opacity: 1;
 }
 .input:focus-visible {
   outline: 3px solid var(--brand);
   outline-offset: 1px;
+}
+.input:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+/* Estado de error: el borde rojo solo no basta para quien no distingue el
+   color, así que el campo también cambia el grosor del borde. El mensaje
+   textual que lo acompaña es la confirmación redundante. */
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+  border-width: 2px;
+  padding: 10px 11px;
+}
+.input[aria-invalid='true']:focus-visible {
+  outline-color: var(--danger);
 }
 textarea.input {
   min-height: 96px;
@@ -406,12 +712,32 @@ textarea.input {
 }
 select.input {
   cursor: pointer;
+  /* Flecha propia: la nativa cambia de forma entre navegadores y en muchos
+     sistemas casi no se ve sobre el fondo cálido. */
+  appearance: none;
+  padding-right: 38px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 19px) calc(50% + 2px),
+    calc(100% - 14px) calc(50% + 2px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+select.input option {
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .field {
   margin-bottom: 14px;
 }
 .field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   color: var(--danger);
   font-size: 0.8125rem;
   margin-top: 5px;
@@ -442,10 +768,14 @@ select.input {
 }
 
 /* ---------- pills / chips ---------- */
+/* `.pill` es un dato, no un control: nunca debe parecer pulsable. Por eso no
+   tiene cursor ni estado de foco propio, y su contraste se apoya en el tono
+   (`success`/`warning`/`danger`/`info`) más un icono cuando lo acompaña. */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  max-width: 100%;
   background: var(--surface-2);
   border: 1px solid var(--line);
   color: var(--muted);
@@ -453,6 +783,10 @@ select.input {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 650;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pill.brand {
   background: var(--brand-soft);
@@ -469,8 +803,21 @@ select.input {
   color: var(--warning);
   border-color: transparent;
 }
+.pill.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: transparent;
+}
 
+/* `.chip` es el control conmutable del sistema (intereses, filtros por
+   materia, tipo de recurso, orden de la comunidad). Es el único patrón: el
+   estado activo se marca con `aria-pressed`, no con una clase libre, así que
+   teclado y lector de pantalla reciben lo mismo que ve el ojo. */
 .chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 11px 15px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -480,19 +827,36 @@ select.input {
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
-  min-height: 44px;
+  min-height: var(--tap);
+  max-width: 100%;
 }
 .chip:hover {
   background: var(--surface-2);
+  border-color: var(--brand);
 }
 .chip[aria-pressed='true'] {
   background: var(--brand);
   border-color: var(--brand);
   color: var(--brand-ink);
 }
-.chips {
+.chip[aria-pressed='true']:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+/* Variante densa para las barras de filtro, sin bajar del área táctil mínima:
+   lo que cambia es el aire horizontal y el cuerpo del texto. */
+.chip.sm {
+  padding: 9px 12px;
+  font-size: 0.875rem;
+  min-height: var(--tap);
+}
+.chips,
+.chips-inline {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+}
+.chips {
   gap: 10px;
 }
 
@@ -537,6 +901,22 @@ select.input {
 .row:last-child {
   border-bottom: 0;
 }
+/* Los bloques de texto de una fila pueden ser largos (correo, objetivo de la
+   sesión, nombre del tutor): se les permite encogerse y repartirse en varias
+   líneas para que la acción de la derecha nunca quede fuera de la tarjeta. */
+.row > .flex-1,
+.row > .truncate {
+  min-width: 0;
+}
+@media (max-width: 520px) {
+  .row.stack-mobile {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .row.stack-mobile > :last-child {
+    margin-left: 0;
+  }
+}
 
 /* ---------- progress ---------- */
 .bar {
@@ -558,21 +938,60 @@ select.input {
   line-height: 1.1;
 }
 
-/* ---------- notices ---------- */
+/* ---------- notices ----------
+   Aviso que vive *dentro* de la página: explica un estado del contenido (sin
+   hijo vinculado, sesión para otro, comunidad en solo lectura). Comparte
+   paleta, ritmo y tonos con los avisos flotantes (`.toast`), de modo que
+   "algo va mal" se ve igual esté donde esté. Cuatro tonos y ninguno más:
+   info (marca), success, warning y danger. El color nunca es la única
+   señal: cada tono trae su icono y su prefijo en el texto. */
 .notice {
-  padding: 13px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
   border-radius: var(--radius);
-  background: var(--surface-2);
-  border-left: 4px solid var(--brand);
+  background: var(--brand-soft);
+  border-left: 3px solid var(--brand);
+  color: var(--ink);
   font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.notice > app-icon,
+.notice > .notice-ico {
+  flex: none;
+  color: var(--brand);
+  margin-top: 1px;
+}
+.notice > :last-child {
+  min-width: 0;
+}
+.notice p {
+  margin: 0;
+}
+.notice.success {
+  background: var(--success-soft);
+  border-left-color: var(--success);
+}
+.notice.success > app-icon,
+.notice.success > .notice-ico {
+  color: var(--success);
 }
 .notice.warning {
   background: var(--warning-soft);
   border-left-color: var(--warning);
 }
-.notice.success {
-  background: var(--success-soft);
-  border-left-color: var(--success);
+.notice.warning > app-icon,
+.notice.warning > .notice-ico {
+  color: var(--warning);
+}
+.notice.danger {
+  background: var(--danger-soft);
+  border-left-color: var(--danger);
+}
+.notice.danger > app-icon,
+.notice.danger > .notice-ico {
+  color: var(--danger);
 }
 
 .rating {
@@ -581,6 +1000,10 @@ select.input {
   font-size: 0.9375rem;
 }
 
+/* ---------- empty & error states ---------- */
+/* Un mismo componente cubre "no hay nada todavía" y "no se pudo cargar", y lo
+   que cambia es el tono: vacío es neutro, error es peligro. Así el usuario
+   distingue de un vistazo entre "tienes que crear algo" y "algo falló". */
 .empty {
   padding: 32px 20px;
   text-align: center;
@@ -588,10 +1011,34 @@ select.input {
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-lg);
 }
+.empty .empty-ico {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.empty.danger {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.empty.danger .empty-ico {
+  background: var(--surface);
+  color: var(--danger);
+}
+.empty.danger strong {
+  color: var(--ink);
+}
 /* Estados vacíos y de error con acciones (reintentar, volver). */
 .empty .actions {
   justify-content: center;
   margin-top: 18px;
+}
+.empty p {
+  margin-bottom: 6px;
 }
 
 /* ---------- loading ---------- */
@@ -672,6 +1119,7 @@ select.input {
 .shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .side {
@@ -683,10 +1131,15 @@ select.input {
   position: fixed;
   inset: 0 auto 0 0;
   height: 100vh;
+  /* `dvh` en móvil: `vh` incluye la barra de direcciones del navegador, así
+     que con `vh` la barra lateral sobresale por debajo y el pie queda
+     inalcanzable al final del scroll. */
+  height: 100dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  z-index: 30;
+  z-index: var(--z-nav);
+  overscroll-behavior: contain;
 }
 
 .brand {
@@ -699,6 +1152,10 @@ select.input {
   letter-spacing: 0.02em;
   color: var(--brand);
   text-decoration: none;
+  flex: none;
+}
+.brand app-icon {
+  flex: none;
 }
 .brand-sub {
   font-size: 0.6875rem;
@@ -722,13 +1179,20 @@ select.input {
   text-decoration: none;
   font-size: 0.9375rem;
   font-weight: 600;
+  min-height: var(--tap);
 }
 .nav a:hover {
   background: var(--surface-2);
   color: var(--ink);
 }
+/* La sección activa se marca con relleno *y* con el icono en color de marca:
+   el color solo no bastaría para quien no lo distingue. */
 .nav a.active {
   background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+.nav a.active .nav-ico {
   color: var(--brand);
 }
 .nav-ico {
@@ -759,7 +1223,7 @@ select.input {
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 24px;
@@ -768,8 +1232,12 @@ select.input {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
+.page-head {
+  min-width: 0;
+}
 .page-head h1 {
   margin-bottom: 4px;
 }
@@ -777,13 +1245,36 @@ select.input {
 .nav-toggle {
   display: none;
 }
+/* El velo aparece siempre presente en móvil y solo se enciende al abrir el
+   menú, para que pueda fundirse en lugar de saltar. */
 .scrim {
   display: none;
+}
+@media (max-width: 760px) {
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    -webkit-backdrop-filter: blur(var(--blur-sm));
+    backdrop-filter: blur(var(--blur-sm));
+    z-index: var(--z-scrim);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-slow) var(--ease),
+      visibility var(--dur-slow) var(--ease);
+  }
+  .scrim.show {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 /* ---------- auth layout ---------- */
 .auth {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px 16px;
@@ -798,20 +1289,36 @@ select.input {
   width: 100%;
   box-shadow: var(--shadow-lg);
 }
+/* El conmutador de tema vive en una esquina absoluta respecto a la página
+   entera, no de la caja: así no se desplaza con el scroll de un formulario
+   largo en móvil. */
 .auth-top {
   position: absolute;
   top: 18px;
   right: 18px;
 }
 
-/* ---------- responsive ---------- */
-@media (max-width: 1000px) {
+/* ---------- responsive ----------
+   Tres cortes con una regla cada uno:
+   · 1100px  las rejillas de 3 columnas pasan a 2 (tablet horizontal)
+   · 980px   los layouts de página a 2 columnas se apilan (tablet vertical)
+   · 760px   navegación lateral a cajón, una columna
+   · 520px   móvil pequeño: compactación extra
+   Antes todo se apilaba de golpe a 1000px, lo que dejaba la tablet como una
+   versión muy larga de la versión de escritorio. */
+
+@media (max-width: 1100px) {
+  .c3 {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 980px) {
   .c8,
   .c7,
   .c6,
   .c5,
-  .c4,
-  .c3 {
+  .c4 {
     grid-column: span 12;
   }
   .content {
@@ -823,29 +1330,27 @@ select.input {
   body {
     font-size: 15.5px;
   }
+  /* En escritorio el menú tampoco se solapa con nada, así que aquí y allí el
+     panel es opaco: sin nada con detalle detrás que difuminar, un cristal solo
+     añade coste de pintado. */
   .side {
     transform: translateX(-100%);
-    transition: transform 0.25s ease;
+    transition: transform var(--dur-slow) var(--ease);
     box-shadow: var(--shadow-lg);
-    width: 260px;
+    width: min(280px, 84vw);
+    visibility: hidden;
   }
   .side.open {
     transform: translateX(0);
+    visibility: visible;
   }
   .content {
     margin-left: 0;
     width: 100%;
-    padding: 16px 16px 48px;
+    padding: 16px 16px calc(48px + env(safe-area-inset-bottom));
   }
   .nav-toggle {
     display: inline-grid;
-  }
-  .scrim.show {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(28, 18, 10, 0.45);
-    z-index: 25;
   }
   h1 {
     font-size: 1.5rem;
@@ -861,6 +1366,54 @@ select.input {
   }
   .authbox {
     padding: 22px;
+  }
+  /* La barra de acciones es el patrón de CTA de la app: en una columna cabe
+     un botón de ancho completo y legible, no dos botones apretados. */
+  .actions > .btn {
+    flex: 1 1 auto;
+  }
+  .section-head {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 620px) {
+  .c3 {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 520px) {
+  .content {
+    padding: 14px 12px calc(44px + env(safe-area-inset-bottom));
+  }
+  .card {
+    padding: 14px;
+  }
+  /* Los títulos largos (grupos, materías, nombres de tutor) se rompen en dos
+     líneas en vez de desbordar la tarjeta. */
+  h1 {
+    font-size: 1.4rem;
+  }
+  h2 {
+    font-size: 1.1rem;
+  }
+  .actions {
+    gap: 8px;
+  }
+  .actions > .btn {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .empty {
+    padding: 24px 16px;
+  }
+  /* Los labels dejan de ser bloques: el campo debe ocupar todo el ancho. */
+  .grid.two-col {
+    grid-template-columns: 1fr;
+  }
+  .chat-compose {
+    padding: 10px;
   }
 }
 
@@ -893,11 +1446,21 @@ select.input {
   font: inherit;
   font-weight: 650;
   cursor: pointer;
-  padding: 4px 2px;
+  /* El subrayado se mantiene siempre: es la señal que distingue un enlace de
+     un botón, y este control hace de enlace. */
   text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+  min-height: var(--tap-sm);
 }
 .link-btn:hover {
-  text-decoration: none;
+  color: var(--brand-hover);
+}
+.link-btn.sm {
+  font-size: 0.8125rem;
+  min-height: 0;
+  padding: 4px 2px;
 }
 
 .step-label {
@@ -912,11 +1475,6 @@ select.input {
 .grid.two-col {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-}
-@media (max-width: 520px) {
-  .grid.two-col {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* onboarding */
@@ -960,9 +1518,7 @@ select.input {
   cursor: pointer;
   font: inherit;
   color: inherit;
-  transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease;
+  min-height: var(--tap);
 }
 .role-card:hover {
   border-color: var(--line-strong);
@@ -987,6 +1543,7 @@ select.input {
   flex-direction: column;
   min-width: 0;
   flex: 1;
+  line-height: 1.35;
 }
 .role-check {
   display: grid;
@@ -1001,6 +1558,9 @@ select.input {
 .code-input {
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  /* Los guiones del formato C2L-XXXX-XXX se leen mejor con un poco de
+     espacio, pero sin separar tanto que el código parezca otro texto. */
+  word-spacing: 0.1em;
 }
 
 /* ---------- shell extras ---------- */
@@ -1027,6 +1587,7 @@ select.input {
   border-radius: var(--radius);
   text-decoration: none;
   color: inherit;
+  min-height: var(--tap);
 }
 .side-user:hover {
   background: var(--surface-2);
@@ -1044,22 +1605,38 @@ select.input {
   text-overflow: ellipsis;
 }
 
-.mobile-bar {
-  display: none;
+/* ---------- barra superior ----------
+   Antes era una barra solo de móvil y cada página declaraba su propio conmutador
+   de tema, porque en escritorio no había ningún sitio global donde ponerlo: eso
+   dejaba dos conmutadores visibles en móvil (esta barra y la cabecera de la
+   página). Ahora la barra se ve en todos los anchos y es el único sitio donde
+   vive el conmutador dentro del shell.
+
+   El fondo es `--bg`, el mismo que la página, y no `--surface`: con el mismo
+   tono la barra no se lee como una franja distinta. Sigue siendo opaca, y eso es
+   lo que le permite seguir siendo `sticky`: si fuera transparente, el texto de
+   la página pasaría por detrás del conmutador. El `border-bottom` queda como
+   única marca de su límite. */
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-bar);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 52px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 @media (max-width: 760px) {
-  .mobile-bar {
-    display: flex;
-    align-items: center;
+  .app-bar {
+    /* Sin la marca, solo quedan el botón de menú y el conmutador, así que se
+       reparten los extremos en lugar de ir ambos a la derecha. */
     justify-content: space-between;
-    gap: 12px;
     margin-bottom: 18px;
-  }
-  .mobile-brand {
-    font-weight: 800;
-    font-size: 0.875rem;
-    letter-spacing: 0.04em;
-    color: var(--brand);
   }
 }
 
@@ -1103,6 +1680,7 @@ select.input {
 .mini-stats div {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .mini-stats strong {
   font-size: 1.125rem;
@@ -1113,19 +1691,26 @@ select.input {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
+/* La barra de progreso no puede encogerse por debajo de su contenido, y el
+   nombre de la materia tampoco: las tres columnas son fijas salvo la barra. */
 .subject-row {
   display: grid;
-  grid-template-columns: 110px 1fr 46px;
+  grid-template-columns: minmax(0, 110px) minmax(0, 1fr) 46px;
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
+}
+.subject-row > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .subject-row strong {
   text-align: right;
 }
 @media (max-width: 520px) {
   .subject-row {
-    grid-template-columns: 90px 1fr 40px;
+    grid-template-columns: minmax(0, 84px) minmax(0, 1fr) 40px;
     gap: 8px;
   }
 }
@@ -1397,17 +1982,19 @@ select.input {
 /* ---------- messages ---------- */
 .chat-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 290px minmax(0, 1fr);
   gap: 0;
-  padding: 0;
-  height: min(650px, 75vh);
+  height: min(660px, 76vh);
+  height: min(660px, 76dvh);
   overflow: hidden;
 }
 .chat-list {
   border-right: 1px solid var(--line);
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .chat-item {
   display: flex;
@@ -1420,7 +2007,8 @@ select.input {
   color: inherit;
   font: inherit;
   text-align: left;
-  padding: 14px;
+  padding: 12px 14px;
+  min-height: var(--tap);
   cursor: pointer;
 }
 .chat-item:hover {
@@ -1434,6 +2022,12 @@ select.input {
   flex-direction: column;
   min-width: 0;
   flex: 1;
+  line-height: 1.35;
+}
+.chat-item-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .chat-preview {
   white-space: nowrap;
@@ -1450,9 +2044,9 @@ select.input {
 .unread-dot {
   display: inline-grid;
   place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   border-radius: 999px;
   background: var(--brand);
   color: var(--brand-ink);
@@ -1464,26 +2058,47 @@ select.input {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Sin `min-height: 0`, esta columna crece con el contenido en vez de
+     encogerse: `.chat-messages` no llega a hacer scroll y el hilo largo
+     termina recortado por el `overflow: hidden` del contenedor, con los
+     mensajes más antiguos inalcanzables. */
+  min-height: 0;
 }
 .chat-thread-head {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.chat-thread-head .flex-1 strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   display: flex;
   flex-direction: column;
+}
+/* Los mensajes nuevos se quedan a la vista, pero el hilo se ancla abajo con
+   `margin-top: auto` en el primer hijo y no con `justify-content: flex-end`:
+   así, cuando el hilo desborda, el margen vale 0 y el scroll sigue pudiendo
+   llegar hasta el mensaje más antiguo. */
+.chat-messages > :first-child {
+  margin-top: auto;
 }
 .bubble-row {
   display: flex;
   align-items: flex-end;
   gap: 8px;
   margin: 5px 0;
+  min-width: 0;
 }
 .bubble-row.me {
   justify-content: flex-end;
@@ -1504,6 +2119,7 @@ select.input {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-wrap: break-word;
 }
 .bubble.me {
   margin-left: auto;
@@ -1519,20 +2135,44 @@ select.input {
 .chat-compose {
   display: flex;
   gap: 8px;
-  padding: 14px;
+  padding: 12px;
   border-top: 1px solid var(--line);
+  flex: none;
 }
 .chat-compose .input {
   flex: 1;
+  min-width: 0;
 }
 
+/* El botón de "volver a la lista" solo existe en móvil: es lo que sustituye a
+   la lista, que antes simplemente se ocultaba y dejaba al usuario encerrado en
+   una única conversación sin forma de cambiar. */
+.chat-back {
+  display: none;
+}
 @media (max-width: 760px) {
   .chat-layout {
     grid-template-columns: 1fr;
-    height: min(560px, 70vh);
+    height: min(560px, 72vh);
+    height: min(560px, 72dvh);
   }
-  .chat-list {
+  /* Un solo panel visible: la lista, o el hilo abierto. */
+  .chat-layout[data-view='list'] .chat-thread,
+  .chat-layout[data-view='thread'] .chat-list {
     display: none;
+  }
+  .chat-layout .chat-list {
+    border-right: 0;
+  }
+  .chat-back {
+    display: inline-grid;
+    flex: none;
+  }
+  .bubble {
+    max-width: 84%;
+  }
+  .chat-messages {
+    padding: 14px;
   }
 }
 
@@ -1688,13 +2328,21 @@ select.input {
   background: #fff;
 }
 
-/* ---------- modal ---------- */
+/* ---------- modal ----------
+   El desenfoque del velo cumple dos funciones a la vez: separa la capa del
+   contenido sin necesidad de un negro pesado, y deja claro que detrás hay algo
+   pero que ahora no se puede tocar. El panel en sí es opaco: nunca se aplica
+   blur a texto que se tiene que leer. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(28, 18, 10, 0.5);
-  z-index: 150;
-  animation: fade-in 0.18s ease-out;
+  /* Más denso que el velo del cajón: el modal interrumpe la tarea, el menú solo
+     la aparta. */
+  background: var(--overlay-strong);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+  z-index: var(--z-modal-backdrop);
+  animation: fade-in var(--dur) var(--ease) both;
 }
 @keyframes fade-in {
   from {
@@ -1706,40 +2354,255 @@ select.input {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  /* El margen lateral evita que el panel toque los bordes: `100vw` mide
+     incluyendo la barra de scroll, y sin este holgura el diálogo queda pegado
+     al canto de la pantalla en móviles estrechos. */
   width: min(560px, calc(100vw - 28px));
-  max-height: min(82vh, 760px);
+  max-height: min(84vh, 760px);
+  max-height: min(84dvh, 760px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  z-index: 160;
-  padding: 20px;
+  box-shadow: var(--shadow-float);
+  z-index: var(--z-modal);
+  padding: 22px;
+  animation: modal-in var(--dur) var(--ease-out) both;
+}
+/* Entrada con una fracción de escala: confirma que aparece algo nuevo sin
+   parecer una animación de producto. */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.98);
+  }
 }
 .modal-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
 }
 .modal-head h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  min-width: 0;
+}
+.modal-head .icon-btn {
+  flex: none;
 }
 .modal-body {
   color: var(--ink);
 }
-.icon-btn.sm {
-  width: 34px;
-  height: 34px;
-}
 @media (max-width: 520px) {
   .modal {
+    /* Cuadrar contra el borde superior en móvil deja sitio al teclado virtual
+       sin que el panel quede cortado por abajo. */
     top: 4vh;
     transform: translateX(-50%);
     max-height: 92vh;
+    max-height: 92dvh;
     padding: 16px;
+    animation-name: modal-in-top;
+  }
+  @keyframes modal-in-top {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -8px) scale(0.98);
+    }
+  }
+}
+
+/* ---------- avisos flotantes (toasts) ----------
+   Regla de posicionamiento, y es deliberadamente distinta según la gravedad:
+
+   · `error` y `warning` → **centrados en la pantalla**. Requieren una decisión
+     o una acción; pegados a una esquina se leen por encima o pasan
+     desapercibidos, y en móvil la esquina inferior queda bajo el pulgar y
+     encima de los avisos del sistema.
+   · `info` y `success` → esquina inferior derecha. Confirman algo que ya ha
+     ocurrido y pueden leerse sin abandonar la tarea en curso.
+
+   Ambas Placement comparten el mismo componente, la misma anatomía y los
+   mismos tonos: cambia dónde viven y cuánto pesan, no cómo se ven. */
+.toast-wrap {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  /* Por encima de la videollamada (300): los avisos de "micrófono
+     silenciado" nacen dentro de ella y quedaban tapados por la capa. */
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(380px, calc(100vw - 36px));
+  /* Nunca intercepta el paso del ratón: el aviso flota sobre la interfaz, no
+     la bloquea. */
+  pointer-events: none;
+}
+
+/* Contenedor de los avisos que exigen atención. Cubre la pantalla y centra el
+   grupo, así que un error queda en el centro geométrico de la ventana, no en
+   una esquina. `pointer-events: none` deja seguir usando la página detrás;
+   el panel en sí sí intercepta, para que el botón "Reintentar" y el cierre
+   sean pulsables. */
+.toast-wrap.centered {
+  inset: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  padding: 20px;
+  gap: 12px;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  /* Superficie translúcida con desenfoque: es el único lugar del sistema donde
+     el blur aporta algo, porque el aviso se superpone a contenido real y así
+     se distingue de una tarjeta. El alpha alto mantiene el contraste del
+     texto por encima de lo que hay detrás. */
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-float);
+  font-size: 0.9375rem;
+  font-weight: 550;
+  animation: toast-in var(--dur) var(--ease-out) both;
+}
+.toast.success {
+  border-left-color: var(--success);
+}
+.toast.warning {
+  border-left-color: var(--warning);
+}
+.toast.error {
+  border-left-color: var(--danger);
+}
+.toast app-icon:first-child {
+  color: var(--brand);
+  flex: none;
+  margin-top: 1px;
+}
+.toast.success app-icon:first-child {
+  color: var(--success);
+}
+.toast.warning app-icon:first-child {
+  color: var(--warning);
+}
+.toast.error app-icon:first-child {
+  color: var(--danger);
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toast-body strong {
+  font-weight: 750;
+  line-height: 1.35;
+}
+.toast-body span {
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+.toast-action {
+  flex: none;
+  align-self: center;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--brand);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: var(--tap-sm);
+  padding: 4px 12px;
+  border-radius: var(--radius);
+}
+.toast-action:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
+}
+/* Área táctil de 44px reales alrededor de un icono de 15px: se agranda con un
+   pseudoelemento para no descuadrar la fila. */
+.toast-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  position: relative;
+  flex: none;
+}
+.toast-close::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.toast-close:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.toast-wrap.centered .toast {
+  /* En el centro el aviso se presenta con más cuerpo: es el mensaje que
+     requiere atención, no una confirmación de paso. */
+  max-width: min(440px, 100%);
+  padding: 16px 18px;
+  font-size: 1rem;
+  animation: toast-in-center var(--dur) var(--ease-out) both;
+}
+@keyframes toast-in-center {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast-wrap.centered .toast,
+  .modal,
+  .modal-backdrop {
+    animation: none;
+  }
+}
+@media (max-width: 760px) {
+  .toast-wrap {
+    right: 12px;
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+  .toast-wrap.centered {
+    /* En móvil el centro geométrico queda bajo la barra del navegador y el
+       teclado virtual; se centra en el área visible, ligeramente por encima
+       del medio para dejar respirar el contenido de detrás. */
+    padding: 16px;
+    align-content: center;
   }
 }
 
@@ -1747,9 +2610,13 @@ select.input {
 .vcall {
   position: fixed;
   inset: 0;
-  z-index: 300;
+  z-index: var(--z-fullscreen);
   display: flex;
   flex-direction: column;
+  /* `dvh` evita que los controles queden bajo la barra del navegador en
+     móvil, que es justo donde vive el botón de colgar. */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 .vcall-backdrop {
   position: absolute;
@@ -1806,10 +2673,11 @@ select.input {
   justify-content: center;
   gap: 14px;
   padding: 18px 16px calc(22px + env(safe-area-inset-bottom));
+  flex: none;
 }
 .vcall-controls .icon-btn {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   background: var(--surface);
 }
 .vcall-controls .icon-btn.active {
@@ -1967,34 +2835,44 @@ select.input {
   gap: 8px;
   margin-bottom: 4px;
 }
+/* El selector de hijo es un grupo de pestañas, no un filtro: por eso vive
+   aparte de `.chip` (que no lleva avatar) pero comparte su construcción para
+   que el peso visual sea el mismo. `color` era `--text`, un token que no
+   existe en el sistema, así que el texto heredaba el color del contenedor. */
 .child-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px 6px 6px;
+  padding: 6px 14px 6px 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
-  color: var(--text);
+  color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  min-height: var(--tap);
 }
 .child-chip:hover {
   border-color: var(--brand);
+  background: var(--surface-2);
 }
 .child-chip.active {
   border-color: var(--brand);
   background: var(--brand-soft);
-  font-weight: 600;
+  color: var(--brand);
+  font-weight: 650;
 }
-.child-chip:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+.child-chip .avatar {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.child-chip.active .avatar {
+  background: var(--surface);
 }
 
-/* ---------- código de vinculación (perfil del estudiante) ---------- */.linked-code {
+/* ---------- código de vinculación (perfil del estudiante) ---------- */
+.linked-code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2002,16 +2880,21 @@ select.input {
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-lg);
   background: var(--surface-3);
+}
+.linked-code > div:first-child {
+  min-width: 0;
+  flex: 1 1 240px;
 }
 .linked-code-value {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: none;
 }
 .linked-code-value code {
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: 15px;
   letter-spacing: 0.08em;
   font-weight: 600;
@@ -2161,9 +3044,7 @@ select.input {
   gap: 8px;
   color: var(--success);
   font-weight: 700;
-}
-.link-btn.sm {
-  font-size: 0.8125rem;
+  min-height: var(--tap);
 }
 
 /* ---------- 404 / error genérico ---------- */
@@ -2177,6 +3058,7 @@ select.input {
 }
 .notfound.full {
   min-height: 100vh;
+  min-height: 100dvh;
   justify-content: center;
   padding: 24px 16px;
 }

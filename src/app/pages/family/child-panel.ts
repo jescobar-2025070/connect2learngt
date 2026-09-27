@@ -7,7 +7,6 @@ import { ErrorService } from '../../core/error.service';
 import { LINKED_CODE_PATTERN, SessionService, normalizeLinkedCode } from '../../core/session.service';
 import { ToastService } from '../../core/toast.service';
 import { AccessEntry, Booking, ChildAccount, SharingPreference, Tutor } from '../../core/models';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 import { ModalComponent } from '../../shared/modal';
 import { IconComponent } from '../../shared/icon';
 
@@ -28,7 +27,7 @@ import { IconComponent } from '../../shared/icon';
  */
 @Component({
   selector: 'app-child-panel',
-  imports: [FormsModule, RouterLink, ThemeToggleComponent, ModalComponent, IconComponent],
+  imports: [FormsModule, RouterLink, ModalComponent, IconComponent],
   templateUrl: './child-panel.html',
 })
 export class ChildPanelComponent {

@@ -6,11 +6,10 @@ import { CatalogService, TutorFilters } from '../../core/catalog.service';
 import { ErrorService } from '../../core/error.service';
 import { Tutor } from '../../core/models';
 import { IconComponent } from '../../shared/icon';
-import { ThemeToggleComponent } from '../../shared/theme-toggle';
 
 @Component({
   selector: 'app-tutors',
-  imports: [FormsModule, RouterLink, IconComponent, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, IconComponent],
   templateUrl: './tutors.html',
 })
 export class TutorsPage {
